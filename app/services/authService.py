@@ -1,5 +1,5 @@
 from app.config.firestore import get_db
-from app.models.userModel import UserModel, UserCreateModel, UserLoginModel
+from app.models.userModel import UserModel
 from app.utils.security import getPasswordHash, verifyPassword, createAccessToken
 from fastapi import HTTPException
 from datetime import datetime
@@ -35,7 +35,7 @@ async def registerUser(userDataInput):
             }
         )
     # Check if password and password confirmation match
-    if userDataInput.password != userDataInput.password_confirmation: 
+    if userDataInput.password != userDataInput.passwordConfirmation: 
         raise HTTPException(
             status_code=400,
             detail={
@@ -45,7 +45,6 @@ async def registerUser(userDataInput):
             }
         )
     
-    
     # Create new user
     userId = str(uuid.uuid4()) # Generate a random UUID
     newUserData = UserModel(
@@ -53,7 +52,7 @@ async def registerUser(userDataInput):
         email=userDataInput.email,
         username=userDataInput.username,
         hashedPassword=getPasswordHash(userDataInput.password),
-        registrationDate=datetime.now()
+        registrationDate=datetime.now(),
         # fullName=userDataInput.fullName if hasattr(userDataInput, "fullName") else None
     )
     
@@ -65,48 +64,6 @@ async def registerUser(userDataInput):
         "status": "success",
         "message": "Akun anda berhasil dibuat!"
     }
-
-# async def registerUserWithFirebase(userDataInput):
-#     """Register a new user and send email verification"""
-#     try:
-#         # Create user in Firebase Authentication
-#         user = auth.create_user(
-#             email=userDataInput.email,
-#             password=userDataInput.password,
-#             display_name=userDataInput.fullName if hasattr(userDataInput, "fullName") else None
-#         )
-
-#         # Send email verification
-#         link = auth.generate_email_verification_link(user.email)
-#         print(f"Email verification link: {link}")  # Debugging (send this via email in production)
-
-#         # Return success response
-#         return {
-#             "status": "success",
-#             "message": "Akun berhasil dibuat! Silakan verifikasi email Anda.",
-#             "data": {
-#                 "email": user.email,
-#                 "uid": user.uid
-#             }
-#         }
-#     except auth.EmailAlreadyExistsError:
-#         raise HTTPException(
-#             status_code=409,
-#             detail={
-#                 "status": "fail",
-#                 "message": "Email ini sudah digunakan",
-#                 "timestamp": datetime.now().isoformat()
-#             }
-#         )
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=500,
-#             detail={
-#                 "status": "fail",
-#                 "message": f"Terjadi kesalahan: {str(e)}",
-#                 "timestamp": datetime.now().isoformat()
-#             }
-#         )
 
 async def loginUser(userDataInput):
     """Authenticate a user and return a token"""
@@ -165,46 +122,4 @@ async def loginUser(userDataInput):
         "status": "success",
         "message": "Login berhasil",
         "data": userData
-        
     }
-
-    """Register a new user and send email verification"""
-    try:
-        # Create user in Firebase Authentication
-        user = auth.create_user(
-            email=userDataInput.email,
-            password=userDataInput.password,
-            display_name=userDataInput.fullName if hasattr(userDataInput, "username") else None
-        )
-
-        # Send email verification
-        link = auth.generate_email_verification_link(user.email)
-        print(f"Email verification link: {link}")  # Debugging (send this via email in production)
-
-        # Return success response
-        return {
-            "status": "success",
-            "message": "Akun berhasil dibuat! Silakan verifikasi email Anda.",
-            "data": {
-                "email": user.email,
-                "uid": user.uid
-            }
-        }
-    except auth.EmailAlreadyExistsError:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "status": "fail",
-                "message": "Email ini sudah digunakan",
-                "timestamp": datetime.now().isoformat()
-            }
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "status": "fail",
-                "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
-            }
-        )

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from app.routers import auth
+from app.routers import authRouter, packageRouter, dummyPackageRouter
 from app.config.firestore import initializeFirestore
-
+from datetime import datetime
 
 app = FastAPI (title= "Lokatani GPS Tracking API")
 
@@ -11,7 +11,9 @@ async def startup_db_client():
     initializeFirestore()
 
 # Include routers
-app.include_router(auth.router)
+app.include_router(authRouter.router)
+app.include_router(packageRouter.router)
+app.include_router(dummyPackageRouter.router)
 
 @app.get("/", tags=["Root"])
 async def root():

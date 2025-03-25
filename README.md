@@ -27,26 +27,26 @@ userCollection  →  Data Pengguna (Driver & Admin)
  │   ├── phoneNumber: "08123456789" (Optional)
  │   ├── registrationDate: "2025-01-01"
 
- packageCollection  →  Data Paket & Status Pengiriman
+ packageDeliveryCollection  →  Data Paket & Status Pengiriman
  ├── {packageId} (Document)
  │   ├── driverId: "user_123"
- │   ├── status: "in_transit"
+ │   ├── deliveryStatus: "in transit"
  │   ├── trackerId: "tracker_01"
  │   ├── deliveryStartTime: "2025-03-22T08:00:00Z"
- │   ├── deliveryStartLocation: { 
-                latitude: -6.2088, 
-                longitude: 106.8456 
-            }
- │   ├── checkinTime: "2025-03-22T09:30:00Z"
- │   ├── checkinLocation: { 
-                latitude: -6.2095, 
-                longitude: 106.8460 
-            }
- │   ├── checkoutTime: "2025-03-22T10:45:00Z"
- │   ├── checkoutLocation: { 
-                latitude: -6.2102, 
-                longitude: 106.8472 
-            }
+ |   ├── deliveryStartLocation: { 
+ |   |          latitude: -6.2088, 
+ |   |          longitude: 106.8456 
+ |   |      }
+ |   ├── checkInTime: "2025-03-22T09:30:00Z"
+ |   ├── checkInLocation: { 
+ |   |          latitude: -6.2095, 
+ |   |          longitude: 106.8460 
+ |   |      }
+ |   ├── checkOutTime: "2025-03-22T10:45:00Z"
+ |   ├── checkOutLocation: { 
+ |   |          latitude: -6.2102, 
+ |   |          longitude: 106.8472 
+ |   |      }
 
 returnPackageCollection (Collection)
  ├── {returnPackageId} (Document)
@@ -55,14 +55,28 @@ returnPackageCollection (Collection)
  │   ├── newDriverId: "user_456"
  │   ├── returnStartTime: "2025-03-22T12:00:00Z"
  │   ├── returnStartLocation: { 
-                latitude: -6.2120, 
-                longitude: 106.8485 
-            }
+ │   |          latitude: -6.2120, 
+ │   |          longitude: 106.8485 
+ │   |      }
  │   ├── returnEndTime: "2025-03-22T13:30:00Z"
  │   ├── returnEndLocation: { 
-                latitude: -6.2150, 
-                longitude: 106.8500 
-            }
+ │   |          latitude: -6.2150, 
+ │   |          longitude: 106.8500 
+ │   |      }
+
+ packageCollection (Collection)
+ ├── {packageId} (Document)
+ │   ├── recipientName: "John Doe"
+ │   ├── recipientNumber: 081234567xxx
+ │   ├── recipientAddress: "123 Main Street, Jakarta"
+ │   ├── weight: 5.5
+ │   ├── dimensions: { 
+ │   |          length: 10.0, 
+ │   |          width: 5.0, 
+ │   |          height: 3.0 
+ │   |      }
+ │   ├── additionalNotes: "Handle with care"
+
  ```
 
 
@@ -124,6 +138,6 @@ returnPackageCollection (Collection)
    ```
 4. Start the server:
    ```bash
-   uvicorn main:app --reload
+   uvicorn app.main:app --host 0.0.0.0 --port 8000
    ```
 
