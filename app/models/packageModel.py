@@ -16,15 +16,14 @@ class packageModel(BaseModel):
     recipientName : str
     recipientNumber: int
     recipientAddress: str
-    
     packageWeight: float
-    
     packageDimension: dict = Field(
         default_factory=lambda: {
             "length": 0.0, 
             "width": 0.0, 
             "height": 0.0
-            })
+        }
+    )
     additionalNotes: Optional[str] = None
     
 
@@ -32,10 +31,10 @@ class packageModel(BaseModel):
 class packageDeliveryModel(BaseModel):
     packageId: str
     driverId: str
-    deliveryStatus: deliveryStatusEnum
-    trackerId: Optional[str] = None
+    deliveryStatus: deliveryStatusEnum = deliveryStatusEnum.delivery
+    trackerId: Optional[str] = "Ue2KlB6IMPdfoBN4CR2b"
     
-    deliveryStartTime: datetime 
+    deliveryStartTime: datetime = Field(default_factory=datetime.now)
     deliveryStartLocation: dict = Field(
         default_factory=lambda: {
             "latitude": 0.0, 

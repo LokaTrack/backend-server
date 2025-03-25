@@ -10,10 +10,6 @@ async def register(userDataInput: UserCreateModel):
     """Register a new user"""
     try:
         result = await registerUser(userDataInput)
-        # return JSONResponse(
-        #     status_code=201,
-        #     content=result
-        # )
         return result
     except HTTPException as e:
         return JSONResponse(
@@ -25,13 +21,9 @@ async def register(userDataInput: UserCreateModel):
 async def login(userDataLogin: UserLoginModel):
     """Login an existing user and return a token"""
     try:
-        print("try to login")
         result = await loginUser(userDataLogin)
         return result
     except HTTPException as e:
-        # return e.detail
-        print (e.detail)
-        print (e.status_code)
         return JSONResponse(
             status_code=e.status_code,
             content=e.detail

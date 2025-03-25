@@ -141,19 +141,17 @@ If fail - internal error (Status code 500):
 ## 4. Start Delivery Package
 - URL
   - `/api/v1/package/start`
-
 - Method
   - `POST`
-
 - Request Body:
   - `packageId` as `string`, must exist in packageCollection
-  - `driverId` as `string`
-  - `trackerId` as `string` (optional)
-  - `deliveryStatus` as `string` (always set to "in_transit" on creation)
-  - `deliveryStartTime` as `datetime`
-  - `deliveryStartLocation` as `object`
-  - `latitude` as `float`
-  - `longitude` as `float`
+  - `userId` as `string`
+  - `trackerId` as `string` (optional) 
+
+- Url Dummy
+  - `/api/v1/package/start-dummy`
+- Request Body
+  - `packageId`
 
 ### Success
 Success (Status code 201):
@@ -165,7 +163,7 @@ Success (Status code 201):
     "packageId": "PKG12345",
     "driverId": "DRV98765",
     "trackerId": "TRK54321",
-    "deliveryStatus": "in_transit",
+    "deliveryStatus": "in transit",
     "deliveryStartTime": "2025-03-25T21:30:00.000000",
     "deliveryStartLocation": {
       "latitude": -6.2088,

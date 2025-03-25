@@ -7,7 +7,7 @@ from firebase_admin import auth
 import uuid
 
 async def registerUser(userDataInput):
-    # Register a new user
+    """Register a new user"""
     db = get_db()
     
     # Check if email already exists

@@ -3,6 +3,11 @@ from fastapi.responses import JSONResponse
 from app.models.packageModel import packageModel, packageDeliveryModel
 from app.services.packageService import addPackageDUMMY, startDeliveryPackageDUMMY
 
+from pydantic import BaseModel
+
+class packageModelDummy(BaseModel):
+    packageId : str
+
 router = APIRouter(prefix="/api/v1", tags=["Package Dummy"])
 
 @router.post("/package/add-dummy", status_code=201)
@@ -18,10 +23,10 @@ async def addPackageRouterDum():
         )
 
 @router.post("/package/start-dummy", status_code=201)
-async def startDeliveryRouter(packageId):
+async def startDeliveryRouter(packageDataInput: packageModelDummy):
     """Add a New Package to Delivery Collection"""
     try:
-        result = await startDeliveryPackageDUMMY(packageId)
+        result = await startDeliveryPackageDUMMY(packageDataInput)
         return result
     except HTTPException as e:
         return JSONResponse(
