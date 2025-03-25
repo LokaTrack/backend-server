@@ -1,0 +1,21 @@
+from fastapi import FastAPI
+from app.routers import auth
+from app.config.firestore import initializeFirestore
+
+
+app = FastAPI (title= "Lokatani GPS Tracking API")
+
+# Initialize Firestore on startup
+@app.on_event("startup")
+async def startup_db_client():
+    initializeFirestore()
+
+# Include routers
+app.include_router(auth.router)
+
+@app.get("/", tags=["Root"])
+async def root():
+    return {
+        "status": "success", 
+        "message": "Selamat datang di LokaTrack API"
+    }
