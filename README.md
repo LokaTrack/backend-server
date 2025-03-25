@@ -9,7 +9,7 @@ This is the backend API for the LokaTrack project. The API serves as the backend
 - **Mobile Integration**: Provide APIs for mobile applications to interact with the backend.
 
 ## Database Structure
-```json
+```
 TrackerCollection  →  IoT Tracker (Perangkat GPS yang digunakan untuk tracking)
  ├── {trackerId} (Document)
  │   ├── trackerName: "IoT GPS Device A"
