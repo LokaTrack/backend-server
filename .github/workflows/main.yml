@@ -26,7 +26,7 @@ jobs:
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           cd ${{ secrets.MAIN_DIR }}
           git pull origin ${{ secrets.MAIN_BRANCH }}
-          supervisorctl restart your-app-name
+          sudo supervisorctl restart lokatrack
         EOF
 
     # send notification
