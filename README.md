@@ -27,29 +27,53 @@ userCollection  →  Data Pengguna (Driver & Admin)
  │   ├── phoneNumber: "08123456789" (Optional)
  │   ├── registrationDate: "2025-01-01"
 
+ packageOrderCollection (Collection)
+ ├── {orderNo} (Document)
+ │   ├── orderDate: "12/2/2025"
+ │   ├── orderNo: "OB/03-2025/129"
+ │   ├── costumer: "dony"
+ │   ├── address: "123 Main Street, Jakarta"
+ │   ├── addressMapUrl: "https://www.google.com/maps/search/?api=1 query=123%20Main%20Street%20,%20Jakarta"
+ │   ├── phone: "0812312xxxx"
+ │   ├── items (Sub-collection)
+ │   │    📄 item_1
+ │   │    │   ├── name: "Brokoli Gundul (0.5 Kg)"
+ │   │    │   ├── weight: 0.5 
+ │   │    │   ├── quantity: 5
+ │   │    │   ├── unitPrice: 57000
+ │   │    │   ├── total: 285000
+ │   │    │   ├── notes: ""
+ │   │    📄 item_2
+ │   │    │   ├── name: "Caisim (0.1 Kg)"
+ │   │    │   ├── weight: 0.1
+ │   │    │   ├── quantity: 2
+ │   │    │   ├── unitPrice: 31500
+ │   │    │   ├── total: 63000
+ │   │    │   ├── notes: ""
+ │   ├── totalWeight: 2.7
+ │   ├── subTotal: 1238575
+ │   ├── discount: 0
+ │   ├── shipping: 0
+ │   ├── totalPrice: 1238575
+
  packageDeliveryCollection  →  Data Paket & Status Pengiriman
- ├── {packageId} (Document)
+ ├── {orderNo} (Document)
+ │   ├── orderNo: "OB/03-2025/129"
  │   ├── driverId: "user_123"
- │   ├── deliveryStatus: "in transit"
- │   ├── trackerId: "tracker_01"
+ │   ├── costumer: "dony"
+ │   ├── address: "123 Main Street, Jakarta"
+ │   ├── totalWeight: 2.7
+ │   ├── totalPrice: 1238575
+ │   ├── deliveryStatus: "dikirim"
+ │   ├── trackerId: "1231xxxx"
  │   ├── deliveryStartTime: "2025-03-22T08:00:00Z"
- |   ├── deliveryStartLocation: { 
- |   |          latitude: -6.2088, 
- |   |          longitude: 106.8456 
- |   |      }
- |   ├── checkInTime: "2025-03-22T09:30:00Z"
- |   ├── checkInLocation: { 
- |   |          latitude: -6.2095, 
- |   |          longitude: 106.8460 
- |   |      }
- |   ├── checkOutTime: "2025-03-22T10:45:00Z"
- |   ├── checkOutLocation: { 
- |   |          latitude: -6.2102, 
- |   |          longitude: 106.8472 
- |   |      }
+ |   ├── checkInTime: ""
+ |   ├── checkOutTime: ""
+ |   ├── lastUpdateTime: ""
+
 
 returnPackageCollection (Collection)
- ├── {returnPackageId} (Document)
+ ├── {returnOrderNo} (Document)
  │   ├── previousPackageId: "PKG123"
  │   ├── previousDriverId: "user_123"
  │   ├── newDriverId: "user_456"
@@ -63,20 +87,6 @@ returnPackageCollection (Collection)
  │   |          latitude: -6.2150, 
  │   |          longitude: 106.8500 
  │   |      }
-
- packageCollection (Collection)
- ├── {packageId} (Document)
- │   ├── recipientName: "John Doe"
- │   ├── recipientNumber: 081234567xxx
- │   ├── recipientAddress: "123 Main Street, Jakarta"
- │   ├── weight: 5.5
- │   ├── dimensions: { 
- │   |          length: 10.0, 
- │   |          width: 5.0, 
- │   |          height: 3.0 
- │   |      }
- │   ├── additionalNotes: "Handle with care"
-
  ```
 
 

@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
@@ -28,6 +29,7 @@ def createAccessToken(data: dict, expires_delta: Optional[timedelta] = None):
     # dataToEncode = data.copy()
 
     dataToEncode = {
+        "userId": data["userId"],
         "email": data["email"],
         "role": data["role"],
         "username": data["username"]
@@ -44,3 +46,39 @@ def createAccessToken(data: dict, expires_delta: Optional[timedelta] = None):
     dataToEncode.update({"exp": expire})
     encoded_jwt = jwt.encode(dataToEncode, os.getenv("SECRET_KEY"), os.getenv("ALGORITHM"))
     return encoded_jwt
+
+def verifyAccessToken(token: str):
+    """Verify the JWT access token"""
+    try:
+        payload = jwt.decode(
+            token,
+            os.getenv("SECRET_KEY"),
+            algorithms=[os.getenv("ALGORITHM")]
+        )
+        return payload  # Return the decoded payload if valid
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "status": "fail",
+                "message": "Token kedaluwarsa, silakan login kembali.",
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "status": "fail",
+                "message": "Token tidak valid",
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+
+    # except JWTError:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="Token tidak valid atau telah kedaluwarsa",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )

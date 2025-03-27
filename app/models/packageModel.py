@@ -1,57 +1,82 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List
 from datetime import datetime
-import uuid
 from enum import Enum
 
-class deliveryStatusEnum(str, Enum):
-    delivery = "in transit"
-    checkIn = "arrived"
-    checkOut = "delivered"
-    returnToSender = "returned"  
+# Order item model
+class orderItemModel(BaseModel):
+    name: str
+    quantity: int
+    unitPrice: float
+    total: float
+    notes: Optional[str] = ""
+    weight: float = 0.0  # per item in kg    
+    
+    @field_validator('total')
+    @classmethod
+    def validate_total(cls, total, values):
+        # Check if quantity and unitPrice are available
+        if 'quantity' in values.data and 'unitPrice' in values.data:
+            quantity = values.data['quantity']
+            unit_price = values.data['unitPrice']
+            expected_total = quantity * unit_price
+            
+            # Allow small floating point differences (0.01)
+            if abs(total - expected_total) > 0.01:
+                raise ValueError(f"Total ({total}) doesn't match quantity * unitPrice ({expected_total})")
+        return total
 
-# package model
-class packageModel(BaseModel):
-    packageId: str
-    recipientName : str
-    recipientNumber: int
-    recipientAddress: str
-    packageWeight: float
-    packageDimension: dict = Field(
-        default_factory=lambda: {
-            "length": 0.0, 
-            "width": 0.0, 
-            "height": 0.0
-        }
-    )
-    additionalNotes: Optional[str] = None
-    
+# Package order model
+class packageOrderModel(BaseModel):
+    orderNo: str
+    orderDate: datetime = Field(default_factory=datetime.now)
+    customer: str
+    address: str
+    addressMapUrl: Optional[str] = None
+    phone: str
+    items: List[orderItemModel]
+    totalWeight: float = 0.0  # in kg
+    subTotal: float
+    discount: float = 0
+    shipping: float = 0
+    totalPrice: float
 
-# package delivery model
-class packageDeliveryModel(BaseModel):
-    packageId: str
-    driverId: str
-    deliveryStatus: deliveryStatusEnum = deliveryStatusEnum.delivery
-    trackerId: Optional[str] = "Ue2KlB6IMPdfoBN4CR2b"
-    
-    deliveryStartTime: datetime = Field(default_factory=datetime.now)
-    deliveryStartLocation: dict = Field(
-        default_factory=lambda: {
-            "latitude": 0.0, 
-            "longitude": 0.0
-            })
-    
-    checkInTime: Optional[datetime] = None
-    checkInLocation: dict = Field(
-        default_factory=lambda: {
-            "latitude": 0.0, 
-            "longitude": 0.0
-            })
-    
-    checkOutTime: Optional[datetime] = None
-    checkOutLocation: dict = Field(
-        default_factory=lambda: {
-            "latitude": 0.0, 
-            "longitude": 0.0
-            })
+    @field_validator('subTotal')
+    @classmethod
+    def validate_subtotal(cls, subtotal, values):
+        if 'items' in values.data:
+            items = values.data['items']
+            expected_subtotal = sum(item.total for item in items)
+            
+            # Allow small floating point differences (0.01)
+            if abs(subtotal - expected_subtotal) > 0.01:
+                raise ValueError(f"subTotal ({subtotal}) doesn't match sum of item totals ({expected_subtotal})")
+        return subtotal
 
+    @field_validator('totalWeight')
+    @classmethod
+    def validate_total_weight(cls, total_weight, values):
+        if 'items' in values.data:
+            items = values.data['items']
+            expected_weight = sum(item.weight * item.quantity for item in items)
+            
+            # Allow small floating point differences (0.001 for weight in kg)
+            if abs(total_weight - expected_weight) > 0.001:
+                raise ValueError(f"totalWeight ({total_weight}) doesn't match sum of item weights ({expected_weight})")
+        return total_weight
+
+    @field_validator('totalPrice')
+    @classmethod
+    def validate_total(cls, totalPrice, values):
+        if all(field in values.data for field in ['subTotal', 'discount', 'shipping']):
+            subtotal = values.data['subTotal']
+            discount = values.data['discount']
+            shipping = values.data['shipping']
+            
+            expected_total = subtotal - discount + shipping
+            
+            # Allow small floating point differences (0.01)
+            if abs(totalPrice - expected_total) > 0.01:
+                raise ValueError(f"total orice({totalPrice}) doesn't match subTotal - discount + shipping ({expected_total})")
+        return totalPrice   
+    

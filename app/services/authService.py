@@ -1,4 +1,4 @@
-from app.config.firestore import get_db
+from app.config.firestore import db
 from app.models.userModel import UserModel
 from app.utils.security import getPasswordHash, verifyPassword, createAccessToken
 from fastapi import HTTPException
@@ -8,7 +8,7 @@ import uuid
 
 async def registerUser(userDataInput):
     """Register a new user"""
-    db = get_db()
+    # db = get_db()
     
     # Check if email already exists
     userCollection = db.collection("userCollection")
@@ -67,8 +67,7 @@ async def registerUser(userDataInput):
 
 async def loginUser(userDataInput):
     """Authenticate a user and return a token"""
-    db = get_db()
-    
+
     # Find user by email
     userCollection = db.collection("userCollection")
     query = userCollection.where("email", "==", userDataInput.email).limit(1)
@@ -111,6 +110,7 @@ async def loginUser(userDataInput):
     
     # Generate token
     userData={
+        "userId": userDataDB["userId"],
         "email": userDataDB["email"],
         "role": userDataDB["role"],
         "username": userDataDB["username"]

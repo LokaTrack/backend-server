@@ -14,7 +14,7 @@ This document provides the specifications for the API endpoints of our applicati
   - `password` as `string`, must be at least 8 characters
   - `passwordConfirmation` as `string`, must be same as password
 
-#### If Success
+#### Success
 Success  (Status code 201) :
 ```json
 {
@@ -23,7 +23,7 @@ Success  (Status code 201) :
 }
 ```
 
-#### If Fail
+#### Failure
 if fail - email already taken (Status code 400):
 ```json
 {
@@ -56,7 +56,7 @@ if fail - password less than 8 character (Status code 400):
 - URL
   - `/api/v1/login`
 - Method
-  - POST
+  - `POST`
 - Request Body
   - `email` as `string`
   - `password` as `string`
@@ -94,41 +94,161 @@ if fail - wrong email or password (Status code 401)
 - Method
   - `POST`
 
+- Headers
+  - `Authorization: Bearer <token>`
+
 - Request Body:
-  - `packageId` as `string`, must be unique
-  - `recipientName` as `string`
-  - `recipientNumber` as `integer`
-  - `recipientAddress` as `string`
-  - `packageWeight` as `float`
-  - `packageDimension` as object
-      - `length` as float
-      - `width` as float
-      - `height` as float
-  - `additionalNotes` as `string` (optional)
+  - `orderNo` as `string`, must be unique
+  - `orderDate` as `datetime` (optional, default = current time)
+  - `customer` as `string`
+  - `address` as `string`
+  - `addressMapUrl` as `string` (optional)
+  - `phone` as `string`
+  - `items` as array of objects:
+      - `name` as `string`
+      - `quantity` as `integer`
+      - `unitPrice` as `float`
+      - `total` as `float` (should equal quantity * unitPrice)
+      - `notes` as `string` (optional)
+      - `weight` as `float` (per item in kg)
+  - `totalWeight` as `float` (in kg, should equal sum of item weights)
+  - `subTotal` as `float` (should equal sum of item totals)
+  - `discount` as `float` (default = 0)
+  - `shipping` as `float` (default = 0)
+  - `totalPrice` as `float` (should equal subTotal - discount + shipping)
 
-
-### Success (Status code 201):
+### Success
+Success (Status code 201):
 ```json
 {
   "status": "success",
-  "message": "Paket berhasil ditambahkan",
+  "message": "Order berhasil ditambahkan",
   "data": {
-    "packageId": "PKG12345",
-    "recipientName": "John Doe",
-    "recipientNumber": 81234567890,
-    "recipientAddress": "Jl. Jend. Sudirman No. 1, Jakarta",
-    "packageWeight": 2.5,
-    "packageDimension": {
-      "length": 10.0,
-      "width": 5.0,
-      "height": 5.0
-    },
-    "additionalNotes": "Fragile, Handle with care"
+    "orderNo": "OB/03-2025/129",
+    "orderDate": "2025-03-25T21:30:00.000000",
+    "customer": "John Doe",
+    "address": "Jl. Jend. Sudirman No. 1, Jakarta",
+    "addressMapUrl": "https://www.google.com/maps/search/?api=1&query=Jl.%20Jend.%20Sudirman%20No.%201%2C%20Jakarta",
+    "phone": "081234567890",
+    "items": [
+      {
+        "name": "Product A",
+        "quantity": 2,
+        "unitPrice": 50000,
+        "total": 100000,
+        "notes": "",
+        "weight": 0.5
+      },
+      {
+        "name": "Product B",
+        "quantity": 1,
+        "unitPrice": 75000,
+        "total": 75000,
+        "notes": "Fragile",
+        "weight": 0.2
+      }
+    ],
+    "totalWeight": 1.2,
+    "subTotal": 175000,
+    "discount": 10000,
+    "shipping": 15000,
+    "totalPrice": 180000
   }
 }
 ```
 
 ### Failure
+If fail - unauthorized (Status code 403):
+```json
+{
+  "status": "fail",
+  "message": "Anda tidak memiliki akses untuk menambahkan order.",
+  "timestamp": "2025-03-25T21:30:00.000000"
+}
+```
+
+If fail - order already exists (Status code 409):
+```json
+{
+  "status": "fail",
+  "message": "Order dengan nomor 'OB/03-2025/129' sudah ada",
+  "timestamp": "2025-03-25T21:30:00.000000"
+}
+```
+
+If fail - internal error (Status code 500):
+```
+{
+  "status": "fail",
+  "message": "Terjadi kesalahan: [error details]",
+  "timestamp": "2025-03-25T21:30:00.000000"
+}
+```
+
+## 4. Get Package Detail
+- URL
+  - `/api/v1/package/detail`
+
+- Method
+  - `POST`
+
+- Header 
+  - `Authorization: Bearer <token>`
+
+- Query Parameters:
+  - `orderNo` as `string`
+
+### success
+Success (Status code 200):
+```json
+{
+  "status": "success",
+  "message": "Berhasil mendapatkan detail paket",
+  "data": {
+    "orderNo": "OB/03-2025/129",
+    "orderDate": "2025-03-25T21:30:00.000000",
+    "customer": "John Doe",
+    "address": "Jl. Jend. Sudirman No. 1, Jakarta",
+    "addressMapUrl": "https://www.google.com/maps/search/?api=1&query=Jl.%20Jend.%20Sudirman%20No.%201%2C%20Jakarta",
+    "phone": "081234567890",
+    "items": [
+      {
+        "name": "Product A",
+        "quantity": 2,
+        "unitPrice": 50000,
+        "total": 100000,
+        "notes": "",
+        "weight": 0.5
+      },
+      {
+        "name": "Product B",
+        "quantity": 1,
+        "unitPrice": 75000,
+        "total": 75000,
+        "notes": "Fragile",
+        "weight": 0.2
+      }
+    ],
+    "totalWeight": 1.2,
+    "subTotal": 175000,
+    "discount": 10000,
+    "shipping": 15000,
+    "totalPrice": 180000
+  }
+}
+```
+
+### Failure
+
+If fail - package not found (Status code 404):
+```json
+{
+  "status": "fail",
+  "message": "Paket dengan id 'OB/03-2025/129' tidak ditemukan.",
+  "timestamp": "2025-03-25T21:30:00.000000"
+}
+```
+
 If fail - internal error (Status code 500):
 ```json
 {
@@ -138,20 +258,18 @@ If fail - internal error (Status code 500):
 }
 ```
 
-## 4. Start Delivery Package
+
+## 5. Start Delivery Package
 - URL
-  - `/api/v1/package/start`
+  - `/api/v1/delivery/start`
+
 - Method
   - `POST`
-- Request Body:
-  - `packageId` as `string`, must exist in packageCollection
-  - `userId` as `string`
-  - `trackerId` as `string` (optional) 
+- Header 
+  - `Authorization: Bearer <token>`
 
-- Url Dummy
-  - `/api/v1/package/start-dummy`
-- Request Body
-  - `packageId`
+- Request Body:
+  - `orderNo` as `string`, must exist in packageOrderCollection
 
 ### Success
 Success (Status code 201):
@@ -160,30 +278,23 @@ Success (Status code 201):
   "status": "success",
   "message": "Paket berhasil ditambahkan ke delivery",
   "data": {
-    "packageId": "PKG12345",
-    "driverId": "DRV98765",
-    "trackerId": "TRK54321",
-    "deliveryStatus": "in transit",
-    "deliveryStartTime": "2025-03-25T21:30:00.000000",
-    "deliveryStartLocation": {
-      "latitude": -6.2088,
-      "longitude": 106.8456
-    },
+    "orderNo": "ORD-12345",
+    "driverId": "62f8d408-d483-41f2-8ddc-ea1c11900d41",
+    "customer": "John Doe",
+    "address": "123 Main Street, Jakarta",
+    "totalWeight": 5,
+    "totalPrice": 195000,
+    "deliveryStatus": "dikirim",
+    "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+    "deliveryStartTime": "2025-03-27T11:56:18.190281",
     "checkInTime": null,
-    "checkInLocation": {
-      "latitude": 0.0,
-      "longitude": 0.0
-    },
     "checkOutTime": null,
-    "checkOutLocation": {
-      "latitude": 0.0,
-      "longitude": 0.0
-    }
+    "lastUpdateTime": "2025-03-27T11:56:18.190281"
   }
 }
 ```
 
-Failure
+### Failure
 If fail - package not found (Status code 404):
 ```json
 {

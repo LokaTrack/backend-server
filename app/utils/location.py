@@ -1,10 +1,9 @@
-from app.config.firestore import get_db
+from app.config.firestore import db
 from fastapi import HTTPException
 from datetime import datetime
 
 async def getPackageLocation (trackerId: str):
     """Get the location of a package"""
-    db = get_db()
     trackerDoc = db.collection("trackerCollection").document(trackerId).get()
     
     if not trackerDoc.exists:
