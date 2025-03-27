@@ -21,9 +21,13 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
                     "timestamp": datetime.now().isoformat()
                 }
             )
+        
+        # filter / to _
+        deliveryData = deliveryDataInput.dict()
+        orderNoFilered = deliveryData["orderNo"].replace("/", "_")
 
         # Check if package exists in packageOrderCollection
-        packageOrderDoc = db.collection("packageOrderCollection").document(deliveryDataInput.orderNo).get()
+        packageOrderDoc = db.collection("packageOrderCollection").document(orderNoFilered).get()
         if not packageOrderDoc.exists: 
             raise HTTPException(
                 status_code=404,
@@ -36,7 +40,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
         packageOrderDoc = packageOrderDoc.to_dict()
         
         # if package status is already "dikirim"
-        packageDeliveryDoc = db.collection("packageDeliveryCollection").document(deliveryDataInput.orderNo).get()
+        packageDeliveryDoc = db.collection("packageDeliveryCollection").document(orderNoFilered).get()
         if packageDeliveryDoc.exists:
             packageDeliveryData = packageDeliveryDoc.to_dict()
             if packageDeliveryData["deliveryStatus"] == "dikirim":

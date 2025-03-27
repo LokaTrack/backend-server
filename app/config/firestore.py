@@ -2,6 +2,9 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
     if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):

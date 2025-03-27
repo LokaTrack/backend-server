@@ -42,7 +42,7 @@ if fail - password less than 8 character (Status code 400):
 }
 ```
 
-if fail - password less than 8 character (Status code 400):
+if fail - password and password confirmation not same (Status code 400):
 ```json
 {
   "status": "fail",
@@ -177,7 +177,7 @@ If fail - order already exists (Status code 409):
 ```
 
 If fail - internal error (Status code 500):
-```
+```json
 {
   "status": "fail",
   "message": "Terjadi kesalahan: [error details]",
@@ -190,7 +190,7 @@ If fail - internal error (Status code 500):
   - `/api/v1/package/detail`
 
 - Method
-  - `POST`
+  - `GET`
 
 - Header 
   - `Authorization: Bearer <token>`
