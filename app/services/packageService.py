@@ -36,7 +36,7 @@ async def addPackage(packageDataInput, currentUser):
             )
 
         # generate maps url 
-        if orderData["address"] is None:
+        if orderData["addressMapUrl"] is None:
             encodedAddress = urllib.parse.quote(orderData["address"])
             orderData["addressMapUrl"] = f"https://www.google.com/maps/search/?api=1&query={encodedAddress}"
 
