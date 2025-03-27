@@ -65,7 +65,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
         newPackageData["totalWeight"] = packageOrderDoc["totalWeight"]
         newPackageData["totalPrice"] = packageOrderDoc["totalPrice"]
 
-        db.collection("packageDeliveryCollection").document(newPackageData["orderNo"]).set(newPackageData)
+        db.collection("packageDeliveryCollection").document(orderNoFilered).set(newPackageData)
 
         return {
             "status": "success",

@@ -303,6 +303,15 @@ If fail - package not found (Status code 404):
   "timestamp": "2025-03-25T21:30:00.000000"
 }
 ```
+ (Status code 400):
+```json
+{
+  "status": "fail",
+  "message": "Paket dengan id 'ORD-12345' sudah dalam status 'dikirim'.",
+  "timestamp": "2025-03-25T21:30:00.000000"
+}
+```
+
 If fail - internal error (Status code 500):
 ```json
 {
