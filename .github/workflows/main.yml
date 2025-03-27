@@ -32,4 +32,4 @@ jobs:
     # send notification
     - name: Send WhatsApp Notification
       run: |
-        curl -X GET "https://api.callmebot.com/whatsapp.php?phone=${{ secrets.WA_NUMBER }}&text=[✅]+Deploy+FastApi+berhasil!&apikey=${{ secrets.CALLMEBOT_APIK_EY }}"
+        curl -X GET "https://api.callmebot.com/whatsapp.php?phone=${{ secrets.WA_NUMBER }}&text=%5B%E2%9C%85%5D+Deploy+FastApi+berhasil!&apikey=${{ secrets.CALLMEBOT_APIK_EY }}"
