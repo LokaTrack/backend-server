@@ -1,0 +1,35 @@
+name: Deploy Application
+
+on: # ketika
+  push: # push di
+    branches:  # branch
+      - main  # 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout kode dari repository
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 2. Setup SSH menggunakan webfactory/ssh-agent
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEYS }}
+
+    # SSH ke server, pull kode terbaru, dan restart aplikasi via Supervisor
+    - name: Deploy to Server
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd ${{ secrets.MAIN_DIR }}
+          git pull origin ${{ secrets.MAIN_BRANCH }}
+          supervisorctl restart your-app-name
+        EOF
+
+    # send notification
+    - name: Send WhatsApp Notification
+      run: |
+        curl -X GET "https://api.callmebot.com/whatsapp.php?phone=${{ secrets.WA_NUMBER }}&text=[✅]+Deploy+FastApi+berhasil!&apikey=${{ secrets.CALLMEBOT_APIK_EY }}"
