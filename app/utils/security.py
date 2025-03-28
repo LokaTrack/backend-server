@@ -56,6 +56,7 @@ def verifyAccessToken(token: str):
             algorithms=[os.getenv("ALGORITHM")]
         )
         return payload  # Return the decoded payload if valid
+    
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -72,6 +73,15 @@ def verifyAccessToken(token: str):
             detail={
                 "status": "fail",
                 "message": "Token tidak valid",
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "status": "fail",
+                "message": f"Error verifikasi token: {str(e)}",
                 "timestamp": datetime.now().isoformat()
             }
         )

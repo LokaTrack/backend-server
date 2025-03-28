@@ -67,7 +67,6 @@ async def registerUser(userDataInput):
 
 async def loginUser(userDataInput):
     """Authenticate a user and return a token"""
-
     # Find user by email
     userCollection = db.collection("userCollection")
     query = userCollection.where("email", "==", userDataInput.email).limit(1)
@@ -123,25 +122,3 @@ async def loginUser(userDataInput):
         "message": "Login berhasil",
         "data": userData
     }
-
-async def getUserProfile(currentUser):
-    """Get user profile"""
-    userCollection = db.collection("userCollection")
-    userDoc = userCollection.document(currentUser["userId"]).get()
-    
-    if userDoc.exists:
-        userData = userDoc.to_dict()
-        userData.pop("hashedPassword", None) # Remove hashed password from response
-        return {
-            "status": "success",
-            "data": userData
-        }
-    else:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "status": "fail",
-                "message": "User tidak ditemukan",
-                "timestamp": datetime.now().isoformat()
-            }
-        )

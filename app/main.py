@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from app.routers import authRouter, packageRouter, deliveryRouter
+from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter
+
 
 app = FastAPI (title= "Lokatani GPS Tracking API")
 
@@ -12,6 +13,7 @@ app = FastAPI (title= "Lokatani GPS Tracking API")
 app.include_router(authRouter.router)
 app.include_router(packageRouter.router)
 app.include_router(deliveryRouter.router)
+app.include_router(profileRouter.router)
 
 @app.get("/", tags=["Root"])
 async def root():

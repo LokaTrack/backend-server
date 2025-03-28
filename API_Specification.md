@@ -3,6 +3,8 @@
 
 This document provides the specifications for the API endpoints of our application. Each endpoint is described with its URL, HTTP method, request parameters, and possible responses. The API is designed to be RESTful and follows standard conventions for request and response formats.
 
+
+# Authentication Endpoints
 ## 1. Register Process
 - URL
   - `/api/v1/register`
@@ -77,7 +79,7 @@ Success  (Status code 200) :
 }
 ```
 
-#### fail
+#### Failure
 if fail - wrong email or password (Status code 401)
 ```json
 {
@@ -87,9 +89,12 @@ if fail - wrong email or password (Status code 401)
 }
 ```
 
-## 3. User Profile 
+# User Profile Endpoints
+
+## 1. Get User Profile 
+Get current user profile information
 - URL
-  - `/api/v1/user`
+  - `/api/v1/profile`
 
 - Method
   - `GET`
@@ -113,7 +118,120 @@ if fail - wrong email or password (Status code 401)
 }
 ```
 
-## 4. Add Package
+## 2. Update Username
+- URL
+  - `/api/v1/profile/username`
+
+- Method
+  - `PUT`
+
+- Request Body
+  - `username` as `string`
+
+### Sucess
+```json
+{
+  "status": "success",
+  "message": "username berhasil diubah",
+}
+```
+
+### Failure
+```json
+{
+  "status": "fail",
+  "message": "Update username gagal",
+  "timestamp": "2025-03-28T12:00:00.000000"
+}
+```
+
+## 3. Update Phone Number
+- URL
+  - `/api/v1/profile/phone-number`
+
+- Method
+  - `PUT`
+
+- Request Body
+  - `phoneNumber` as `string`
+
+### Success
+```json
+{
+  "status": "success",
+  "message": "Nomor telepo berhasil diubah",
+}
+```
+
+### Failure
+```json
+{
+  "status": "fail",
+  "message": "Update nomor telepon gagal",
+  "timestamp": "2025-03-28T12:00:00.000000"
+}
+```
+
+
+## 4. Update password
+- URL
+  - `/api/v1/profile/password`
+
+- Method
+  - `PUT`
+
+- Request Body
+  - `currentPassword` as `string`
+  - `newPassword` as `string`
+  - `passwordConfirmation` as `string`
+
+### Success
+```json
+{
+  "status": "success",
+  "message": "password berhasil diubah",
+}
+```
+
+### Failure
+if fail - Incorrect current password (400 Bad Request)
+```json
+{
+  "status": "fail",
+  "message": "Password lama anda salah",
+  "timestamp": "2025-03-28T12:00:00.000000"
+}
+```
+if fail - New password same as old (400 Bad Request)
+```json
+{
+  "status": "fail",
+  "message": "Password baru tidak boleh sama dengan password lama",
+  "timestamp": "2025-03-28T12:00:00.000000"
+}
+```
+
+if fail - Password confirmation mismatch (400 Bad Request)
+```json
+{
+  "status": "fail",
+  "message": "Password baru dan konfirmasi password tidak sama",
+  "timestamp": "2025-03-28T12:00:00.000000"
+}
+```
+
+if fail - Password too short (400 Bad Request)
+```json
+{
+  "status": "fail",
+  "message": "Password baru harus memiliki minimal 8 karakter",
+  "timestamp": "2025-03-28T12:00:00.000000"
+}
+```
+
+
+# Package Endpoint
+## 1. Add Package
 - URL
   - `/api/v1/package/add`
 
@@ -211,7 +329,7 @@ If fail - internal error (Status code 500):
 }
 ```
 
-## 5. Get Package Detail
+## 2. Get Package Detail
 - URL
   - `/api/v1/package/detail`
 
@@ -284,8 +402,9 @@ If fail - internal error (Status code 500):
 }
 ```
 
-
-## 6. Start Delivery Package
+# Delivery Endpoints
+## 1. Start Delivery Package
+Start delivery process for a package
 - URL
   - `/api/v1/delivery/start`
 
@@ -347,4 +466,69 @@ If fail - internal error (Status code 500):
 }
 ```
 
+## Dashboard
+- URL
+  - `/api/v1/dashboard`
 
+- Method
+  - `GET`
+
+- Header 
+  - `Authorization: Bearer <token>`
+```json
+{
+  "status": "success",
+  "message": "Data berhasil diambil",
+  "data": {
+    "statistics": {
+      "dikirim": 28,
+      "return": 2,
+      "success": 93
+    },
+    "recentOrder": [
+        {
+          "orderNo": "OB/01-2025/19129",
+          "deliveryStatus": "dikirim",
+          "checkInTime": null,
+          "lastUpdateTime": "2025-03-27T16:48:00.956517+00:00",
+          "totalWeight": 6.7,
+          "customer": "John Doe",
+          "address": "123 Main Street, Central Jakarta",
+          "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+          "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+          "totalPrice": 576000.0,
+          "deliveryStartTime": "2025-03-27T16:48:00.956517+00:00",
+          "checkOutTime": null
+        },
+        {
+          "orderNo": "OB/01-2025/200",
+          "deliveryStatus": "dikirim",
+          "checkInTime": null,
+          "lastUpdateTime": "2025-03-27T10:47:23.472100+00:00",
+          "totalWeight": 6.7,
+          "customer": "John Doe",
+          "address": "123 Main Street, Central Jakarta",
+          "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+          "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+          "totalPrice": 576000.0,
+          "deliveryStartTime": "2025-03-27T10:47:23.472097+00:00",
+          "checkOutTime": null
+        },
+        {
+          "orderNo": "ORD-12345",
+          "deliveryStatus": "dikirim",
+          "checkInTime": null,
+          "lastUpdateTime": "2025-03-27T11:56:18.190281+00:00",
+          "totalWeight": 5.0,
+          "customer": "John Doe",
+          "address": "123 Main Street, Jakarta",
+          "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+          "driverId": "62f8d408-d483-41f2-8ddc-ea1c11900d41",
+          "totalPrice": 195000.0,
+          "deliveryStartTime": "2025-03-27T11:56:18.190281+00:00",
+          "checkOutTime": null
+        }
+    ]
+  }
+}
+```

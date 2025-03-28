@@ -24,6 +24,21 @@ class UserLoginModel(BaseModel):
     email: EmailStr
     password: str
 
+class UpdateUsernameModel(BaseModel):
+    username: str
+    lastUpdate: datetime = Field(default_factory=datetime.now)
+
+class updatePhoneNumberModel(BaseModel):
+    phoneNumber: str
+    lastUpdate: datetime = Field(default_factory=datetime.now)
+
+class UpdatePasswordModel(BaseModel):
+    currentPassword: str
+    newPassword: str
+    newPasswordConfirmation: str
+    lastUpdate: datetime = Field(default_factory=datetime.now)
+
+
 class UserModel(BaseModel):
     # generates a new UUID each time the User object is created.
     userId: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -35,7 +50,8 @@ class UserModel(BaseModel):
     
     # `default_factory` to generate the value dynamically
     registrationDate: datetime = Field(default_factory=datetime.now)
-    emailVerified: bool = False
+    emailVerified: bool = True
+    lastUpdate: datetime = Field(default_factory=datetime.now)
     
     class Config:
         from_attributes = True
