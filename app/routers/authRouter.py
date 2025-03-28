@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.responses import JSONResponse
 from app.models.userModel import UserCreateModel, UserLoginModel
-from app.services.authService import registerUser, loginUser
+from app.services.authService import registerUser, loginUser, getUserProfile
+from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/v1", tags=["Authentication"])
 
@@ -28,5 +29,16 @@ async def login(userDataLogin: UserLoginModel):
             status_code=e.status_code,
             content=e.detail
         )
-    
+
+@router.get("/user")
+async def getUser(currentUser: dict = Depends(get_current_user)):
+    """Get user data"""
+    try:    
+        result = await getUserProfile(currentUser)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+        )
     

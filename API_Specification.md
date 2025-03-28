@@ -87,7 +87,33 @@ if fail - wrong email or password (Status code 401)
 }
 ```
 
-## 3. Add Package
+## 3. User Profile 
+- URL
+  - `/api/v1/user`
+
+- Method
+  - `GET`
+
+- Headers
+  - `Authorization: Bearer <token>`
+
+### Success
+```json
+{
+    "status": "success",
+    "data": {
+        "phoneNumber": null,
+        "userId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+        "emailVerified": false,
+        "role": "driver",
+        "registrationDate": "2025-03-27T08:08:19.457710+00:00",
+        "email": "xxxx@lokatrack.com",
+        "username": "John Doe"
+    }
+}
+```
+
+## 4. Add Package
 - URL
   - `/api/v1/package/add`
 
@@ -185,7 +211,7 @@ If fail - internal error (Status code 500):
 }
 ```
 
-## 4. Get Package Detail
+## 5. Get Package Detail
 - URL
   - `/api/v1/package/detail`
 
@@ -259,7 +285,7 @@ If fail - internal error (Status code 500):
 ```
 
 
-## 5. Start Delivery Package
+## 6. Start Delivery Package
 - URL
   - `/api/v1/delivery/start`
 

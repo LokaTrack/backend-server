@@ -46,19 +46,19 @@ async def registerUser(userDataInput):
         )
     
     # Create new user
-    userId = str(uuid.uuid4()) # Generate a random UUID
+    # userId = str(uuid.uuid4()) # Generate a random UUID
     newUserData = UserModel(
-        userId=userId,
+        # userId=userId,
         email=userDataInput.email,
         username=userDataInput.username,
         hashedPassword=getPasswordHash(userDataInput.password),
-        registrationDate=datetime.now(),
+        # registrationDate=datetime.now(),
         # fullName=userDataInput.fullName if hasattr(userDataInput, "fullName") else None
     )
     
     # Save user to Firestore
     newUserDataInDict = newUserData.dict()
-    db.collection("userCollection").document(userId).set(newUserDataInDict)
+    db.collection("userCollection").document(newUserData.userId).set(newUserDataInDict)
     
     return {
         "status": "success",
@@ -123,3 +123,25 @@ async def loginUser(userDataInput):
         "message": "Login berhasil",
         "data": userData
     }
+
+async def getUserProfile(currentUser):
+    """Get user profile"""
+    userCollection = db.collection("userCollection")
+    userDoc = userCollection.document(currentUser["userId"]).get()
+    
+    if userDoc.exists:
+        userData = userDoc.to_dict()
+        userData.pop("hashedPassword", None) # Remove hashed password from response
+        return {
+            "status": "success",
+            "data": userData
+        }
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "status": "fail",
+                "message": "User tidak ditemukan",
+                "timestamp": datetime.now().isoformat()
+            }
+        )

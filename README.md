@@ -26,6 +26,7 @@ userCollection  →  Data Pengguna (Driver & Admin)
  │   ├── hashedPassword: "xxxxxxxxx"
  │   ├── phoneNumber: "08123456789" (Optional)
  │   ├── registrationDate: "2025-01-01"
+ │   ├── trackerId: "xxxxx"
 
  packageOrderCollection (Collection)
  ├── {orderNo} (Document)
