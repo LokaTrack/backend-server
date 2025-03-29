@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter
+from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter, userRouter
 from fastapi.exceptions import RequestValidationError
 from app.utils.error import (
     validation_exception_handler, 
@@ -16,6 +16,7 @@ app.include_router(authRouter.router)
 app.include_router(packageRouter.router)
 app.include_router(deliveryRouter.router)
 app.include_router(profileRouter.router)
+app.include_router(userRouter.router)
 
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)

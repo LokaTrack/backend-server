@@ -470,6 +470,7 @@ If fail - internal error (Status code 500):
 }
 ```
 
+# User Endpoint
 ## Dashboard
 - URL
   - `/api/v1/dashboard`
@@ -479,60 +480,107 @@ If fail - internal error (Status code 500):
 
 - Header 
   - `Authorization: Bearer <token>`
+  
 ```json
 {
-  "status": "success",
-  "message": "Data berhasil diambil",
-  "data": {
-    "statistics": {
-      "dikirim": 28,
-      "return": 2,
-      "success": 93
-    },
-    "recentOrder": [
-        {
-          "orderNo": "OB/01-2025/19129",
-          "deliveryStatus": "dikirim",
-          "checkInTime": null,
-          "lastUpdateTime": "2025-03-27T16:48:00.956517+00:00",
-          "totalWeight": 6.7,
-          "customer": "John Doe",
-          "address": "123 Main Street, Central Jakarta",
-          "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-          "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
-          "totalPrice": 576000.0,
-          "deliveryStartTime": "2025-03-27T16:48:00.956517+00:00",
-          "checkOutTime": null
+    "status": "success",
+    "message": "Mengambil data dashboard berhasil",
+    "data": {
+        "statistics": {
+            "dikirim": 3,
+            "sampai": 1,
+            "selesai": 1,
+            "dikembalikan": 1,
+            "others": 0,
+            "percentage": 33,
+            "totalPackage": 6
         },
-        {
-          "orderNo": "OB/01-2025/200",
-          "deliveryStatus": "dikirim",
-          "checkInTime": null,
-          "lastUpdateTime": "2025-03-27T10:47:23.472100+00:00",
-          "totalWeight": 6.7,
-          "customer": "John Doe",
-          "address": "123 Main Street, Central Jakarta",
-          "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-          "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
-          "totalPrice": 576000.0,
-          "deliveryStartTime": "2025-03-27T10:47:23.472097+00:00",
-          "checkOutTime": null
-        },
-        {
-          "orderNo": "ORD-12345",
-          "deliveryStatus": "dikirim",
-          "checkInTime": null,
-          "lastUpdateTime": "2025-03-27T11:56:18.190281+00:00",
-          "totalWeight": 5.0,
-          "customer": "John Doe",
-          "address": "123 Main Street, Jakarta",
-          "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-          "driverId": "62f8d408-d483-41f2-8ddc-ea1c11900d41",
-          "totalPrice": 195000.0,
-          "deliveryStartTime": "2025-03-27T11:56:18.190281+00:00",
-          "checkOutTime": null
-        }
-    ]
-  }
+        "recentOrder": [
+            {
+                "orderNo": "OB/01-2025/1",
+                "deliveryStatus": "dikirim",
+                "checkInTime": null,
+                "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T16:48:00.049000+00:00",
+                "checkOutTime": null
+            },
+            {
+                "orderNo": "OB/01-2025/2",
+                "deliveryStatus": "dikembalikan",
+                "checkInTime": null,
+                "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T16:48:00.121000+00:00",
+                "checkOutTime": null
+            },
+            {
+                "orderNo": "OB/01-2025/5",
+                "deliveryStatus": "selesai",
+                "checkInTime": null,
+                "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T16:48:00.557000+00:00",
+                "checkOutTime": null
+            },
+            {
+                "orderNo": "OB/01-2025/2",
+                "deliveryStatus": "dikirim",
+                "checkInTime": null,
+                "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T16:48:00.575000+00:00",
+                "checkOutTime": null
+            },
+            {
+                "orderNo": "OB/01-2025/19129",
+                "deliveryStatus": "dikirim",
+                "checkInTime": null,
+                "lastUpdateTime": "2025-03-27T16:48:00.956517+00:00",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T16:48:00.672000+00:00",
+                "checkOutTime": null
+            },
+            {
+                "orderNo": "OB/01-2025/4",
+                "deliveryStatus": "sampai",
+                "checkInTime": null,
+                "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T16:48:00.795000+00:00",
+                "checkOutTime": null
+            }
+        ]
+    }
 }
 ```
