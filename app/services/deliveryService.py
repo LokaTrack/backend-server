@@ -12,7 +12,7 @@ from uuid import uuid4
 async def startDeliveryPackage(deliveryDataInput, currentUser):
     try:
         # Check if user is admin or driver
-        if currentUser["role"] != "admin" and currentUser["role"] != "driver":
+        if currentUser["role"] not in ["admin", "driver"]:    
             raise HTTPException(
                 status_code=403,
                 detail={
@@ -24,10 +24,14 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
         
         # filter / to _
         deliveryData = deliveryDataInput.dict()
-        orderNoFilered = deliveryData["orderNo"].replace("/", "_")
+        orderNoFiltered = deliveryData["orderNo"].replace("/", "_")
 
         # Check if package exists in packageOrderCollection
-        packageOrderDoc = db.collection("packageOrderCollection").document(orderNoFilered).get()
+        packageOrderDoc = (
+            db.collection("packageOrderCollection")
+            .document(orderNoFiltered)
+            .get()
+        )
         if not packageOrderDoc.exists: 
             raise HTTPException(
                 status_code=404,
@@ -39,19 +43,22 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
             )
         packageOrderDoc = packageOrderDoc.to_dict()
         
-        # if package status is already "dikirim"
-        packageDeliveryDoc = db.collection("packageDeliveryCollection").document(orderNoFilered).get()
-        if packageDeliveryDoc.exists:
-            packageDeliveryData = packageDeliveryDoc.to_dict()
-            if packageDeliveryData["deliveryStatus"] == "dikirim":
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "status": "fail",
-                        "message": f"Paket dengan id '{deliveryDataInput.orderNo}' sudah dalam status 'dikirim'.",
-                        "timestamp": datetime.now().isoformat()
-                    }
-                )
+        # check if package status is already "dikirim"
+        packageDeliveryDoc = ( 
+            db.collection("packageDeliveryCollection")
+            .document(orderNoFiltered)
+            .get()
+        )
+        if packageDeliveryDoc.exists :
+            status = packageDeliveryDoc.to_dict().get("deliveryStatus")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "fail",
+                    "message": f"Paket dengan id '{deliveryDataInput.orderNo}' sudah dalam status '{status}'.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            )
         
         # get package location
         # packageLocation = await getPackageLocation(deliveryDataInput.trackerId)
@@ -59,13 +66,15 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
 
         # Update data
         newPackageData= deliveryDataInput.dict()
-        newPackageData["driverId"] = currentUser["userId"]
-        newPackageData["customer"] = packageOrderDoc["customer"]
-        newPackageData["address"] = packageOrderDoc["address"]
-        newPackageData["totalWeight"] = packageOrderDoc["totalWeight"]
-        newPackageData["totalPrice"] = packageOrderDoc["totalPrice"]
+        newPackageData.update({
+            "driverId": currentUser["userId"],
+            "customer": packageOrderDoc["customer"],
+            "address": packageOrderDoc["address"],
+            "totalWeight": packageOrderDoc["totalWeight"],
+            "totalPrice": packageOrderDoc["totalPrice"]
+        })
 
-        db.collection("packageDeliveryCollection").document(orderNoFilered).set(newPackageData)
+        db.collection("packageDeliveryCollection").document(orderNoFiltered).set(newPackageData)
 
         return {
             "status": "success",
@@ -76,6 +85,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"Error tidak terduga: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail={
