@@ -4,6 +4,8 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 
 class ErrorResponse:
     """Standardized error response format"""
@@ -61,6 +63,22 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         message=str(exc.detail) if isinstance(exc.detail, str) else exc.detail.get("message", "An error occurred"),
         errors=exc.detail.get("errors", None) if isinstance(exc.detail, dict) else None,
         status_code=exc.status_code
+    ).to_response()
+
+async def not_found_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Handle 404 Not Found errors"""
+    return ErrorResponse(
+        status="fail",
+        message="Resource not found",
+        status_code=status.HTTP_404_NOT_FOUND
+    ).to_response()
+
+async def method_not_allowed_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Handle 405 Method Not Allowed errors"""
+    return ErrorResponse(
+        status="fail",
+        message=f"Method {request.method} not allowed for this endpoint",
+        status_code=status.HTTP_405_METHOD_NOT_ALLOWED
     ).to_response()
 
 async def general_exception_handler(request: Request, exc: Exception):

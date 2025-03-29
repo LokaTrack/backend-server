@@ -145,6 +145,8 @@ returnPackageCollection (Collection)
    ```
 3. Install dependencies:
    ```bash
+   sudo apt install python3-venv
+   python3 -m venv venv
    pip install -r requirements.txt
    ```
 4. Start the server:
