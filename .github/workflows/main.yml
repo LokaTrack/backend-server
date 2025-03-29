@@ -1,9 +1,9 @@
 name: Deploy Application
 
-on: # ketika
-  push: # push di
-    branches:  # branch
-      - main  # 
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -14,22 +14,46 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    # 2. Setup SSH menggunakan webfactory/ssh-agent
+    # Setup SSH menggunakan webfactory/ssh-agent
     - name: Set up SSH
       uses: webfactory/ssh-agent@v0.5.3
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEYS }}
 
-    # SSH ke server, pull kode terbaru, dan restart aplikasi via Supervisor
+    # SSH ke server, pull kode terbaru, restart aplikasi via Supervisor & check status
     - name: Deploy to Server
+      id: deploy
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+        DEPLOY_SUCCESS=true
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF' || DEPLOY_SUCCESS=false
           cd ${{ secrets.MAIN_DIR }}
           git pull origin ${{ secrets.MAIN_BRANCH }}
           sudo supervisorctl restart lokatrack
+          
+          # Wait a moment for the service to start
+          sleep 5
+          
+          # Check if lokatrack is running
+          STATUS=$(sudo supervisorctl status lokatrack)
+          if [[ $STATUS == *"RUNNING"* ]]; then
+            echo "Lokatrack is running successfully"
+            exit 0
+          else
+            echo "Failed to start lokatrack, status: $STATUS"
+            exit 1
+          fi
         EOF
+        
+        echo "deploy_success=$DEPLOY_SUCCESS" >> $GITHUB_OUTPUT
 
-    # send notification
-    - name: Send WhatsApp Notification
+    # send success notification
+    - name: Send Success WhatsApp Notification
+      if: steps.deploy.outputs.deploy_success == 'true'
       run: |
-        curl -X GET "https://api.callmebot.com/whatsapp.php?phone=${{ secrets.WA_NUMBER }}&text=%5B%E2%9C%85%5D+Deploy+FastApi+berhasil!&apikey=${{ secrets.CALLMEBOT_APIK_EY }}"
+        curl -X GET "https://api.callmebot.com/whatsapp.php?phone=${{ secrets.WA_NUMBER }}&text=%5B%E2%9C%85%5D+Deploy+FastApi+berhasil!+Lokatrack+running.&apikey=${{ secrets.CALLMEBOT_APIK_EY }}"
+    
+    # send failure notification
+    - name: Send Failure WhatsApp Notification
+      if: steps.deploy.outputs.deploy_success == 'false'
+      run: |
+        curl -X GET "https://api.callmebot.com/whatsapp.php?phone=${{ secrets.WA_NUMBER }}&text=%5B%E2%9D%8C%5D+Deploy+FastApi+gagal!+Lokatrack+tidak+berjalan.&apikey=${{ secrets.CALLMEBOT_APIK_EY }}"
