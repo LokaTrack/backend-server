@@ -10,7 +10,7 @@ from app.utils.location import getPackageLocation
 async def addPackage(packageDataInput, currentUser):
     try:
         # Check if user is admin
-        if currentUser["role"] != "admin":
+        if currentUser["role"] not in ["admin"]:
             raise HTTPException(
                 status_code=403,
                 detail={
@@ -25,7 +25,11 @@ async def addPackage(packageDataInput, currentUser):
         orderNoFilered = orderData["orderNo"].replace("/", "_")
         
         # Check if orderNo already exists
-        orderDoc = db.collection("packageOrderCollection").document(orderNoFilered).get()
+        orderDoc = (
+            db.collection("packageOrderCollection")
+            .document(orderNoFilered)
+            .get()
+        )
         if orderDoc.exists:
             raise HTTPException(
                 status_code=409,
@@ -37,13 +41,13 @@ async def addPackage(packageDataInput, currentUser):
             )
 
         # generate maps url 
-        if orderData["addressMapUrl"] is None:
+        if not orderData.get("addressMapUrl"):
             encodedAddress = urllib.parse.quote(orderData["address"])
             orderData["addressMapUrl"] = f"https://www.google.com/maps/search/?api=1&query={encodedAddress}"
 
         # Create a copy without items for the main document
         orderData_without_items = orderData.copy()
-        orderData_without_items.pop("items", None)
+        orderData_without_items.pop("items", None)        
         
         db.collection("packageOrderCollection").document(orderNoFilered).set(orderData_without_items)
         
@@ -80,7 +84,11 @@ async def getPackageDetail(orderNo):
         # firestore not allow / in document names
         orderNoFiltered = orderNo.replace("/", "_")
         
-        packageDoc = db.collection("packageOrderCollection").document(orderNoFiltered).get()
+        packageDoc = ( 
+            db.collection("packageOrderCollection")
+            .document(orderNoFiltered)
+            .get()
+        )
         if not packageDoc.exists:
             raise HTTPException(
                 status_code=404,
@@ -94,11 +102,17 @@ async def getPackageDetail(orderNo):
         packageData["orderNo"] = orderNo
 
         # get the items subcollection
-        items_collection = db.collection("packageOrderCollection").document(orderNoFiltered).collection("items").stream()
-        items_list = []
-        for item_doc in items_collection:
-            items_list.append(item_doc.to_dict())
+        items_collection = (
+            db.collection("packageOrderCollection")
+            .document(orderNoFiltered)
+            .collection("items")
+            .stream()
+        )
         
+        # items_list = []
+        # for item_doc in items_collection:
+        #     items_list.append(item_doc.to_dict())
+        items_list = [item_doc.to_dict() for item_doc in items_collection]
         packageData["items"] = items_list                      
 
         return {

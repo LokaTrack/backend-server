@@ -11,11 +11,14 @@ async def registerUser(userDataInput):
     # db = get_db()
     
     # Check if email already exists
-    userCollection = db.collection("userCollection")
-    query = userCollection.where("email", "==", userDataInput.email).limit(1)
-    existing_user = query.get()
+    docUsers = (
+        db.collection("userCollection")   
+        .where("email", "==", userDataInput.email)
+        .limit(1)
+        .get()
+    )
     
-    if len(existing_user) > 0:
+    if len(docUsers) > 0:
         raise HTTPException(
             status_code=409,  
             detail={
@@ -68,11 +71,14 @@ async def registerUser(userDataInput):
 async def loginUser(userDataInput):
     """Authenticate a user and return a token"""
     # Find user by email
-    userCollection = db.collection("userCollection")
-    query = userCollection.where("email", "==", userDataInput.email).limit(1)
-    userDocs = query.get()
+    userDocs = (
+        db.collection("userCollection")
+        .where("email", "==", userDataInput.email)
+        .limit(1)
+        .get()
+    )
     #[
-    #   <google.cloud.firestore_v1.document.DocumentSnapshot object at 0x7f1234567890>
+    #   <google.cloud.firestore_v1.document.DocumentSnapshot object at 0x7f1234567890> -> snapshot
     #]
     if len(userDocs) == 0:
         raise HTTPException(
@@ -90,7 +96,7 @@ async def loginUser(userDataInput):
     userDataDB = userDoc.to_dict()
     # {
     # "email": "user@example.com",
-    # "hashedPassword": "$2b$12$abc123hashedpassword",
+    # "hashedPassword": "$2b$12$abc123somehashedpassword",
     # "role": "driver",
     # "fullName": "John Doe",
     # "registrationDate": "2025-03-24T10:00:00Z"
