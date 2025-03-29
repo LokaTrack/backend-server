@@ -6,7 +6,7 @@ from enum import Enum
 class deliveryStatusEnum(str, Enum):
     delivery = "dikirim"
     checkin = "sampai"
-    checkout = "diterima"
+    checkout = "selesai"
     returned = "dikembalikan"  
 
 # package delivery model
