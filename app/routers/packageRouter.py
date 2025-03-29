@@ -1,12 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Path
 from fastapi.responses import JSONResponse
 from app.models.packageModel import packageOrderModel
 from app.services.packageService import addPackage, getPackageDetail, getAllPackages
 from app.utils.auth import get_current_user
 
-router = APIRouter(prefix="/api/v1/package", tags=["Package"])
+router = APIRouter(prefix="/api/v1", tags=["Package"])
 
-@router.post("/add", status_code=201)
+@router.post("/packages", status_code=201)
 async def addPackageRouter(
     packageDataInput: packageOrderModel,  
     curentUser: dict = Depends(get_current_user)
@@ -22,8 +22,10 @@ async def addPackageRouter(
         )
 
     
-@router.get("/detail", status_code=200)
-async def getPackageRouter(orderNo: str, curentUser: dict = Depends(get_current_user)):
+@router.get("/packages/{orderNo}", status_code=200)
+async def getPackageRouter(
+    orderNo: str = Path(..., description="Order Number of package, must in double url encoded format", example="OB%252F01-2025%252F19129"), 
+    curentUser: dict = Depends(get_current_user)):
     """Get a Package"""
     try:
         result = await getPackageDetail(orderNo)

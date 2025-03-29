@@ -331,7 +331,7 @@ If fail - internal error (Status code 500):
 
 ## 2. Get Package Detail
 - URL
-  - `/api/v1/package/detail`
+  - `/api/v1/packages/{orderNo}`
 
 - Method
   - `GET`
@@ -339,8 +339,12 @@ If fail - internal error (Status code 500):
 - Header 
   - `Authorization: Bearer <token>`
 
-- Query Parameters:
+- Path Parameters:
   - `orderNo` as `string`
+  - **Note**: The `orderNo` must be DOUBLE URL-encoded, example:   
+    - Original order number: `OB/01-2025/19129`
+    - Single-encoded (NOT WORKING): `OB%2F01-2025%2F19129`
+    - Double-encoded (CORRECT): `OB%252F01-2025%252F19129`
 
 ### success
 Success (Status code 200):

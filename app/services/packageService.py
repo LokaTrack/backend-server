@@ -1,4 +1,5 @@
 import urllib
+from urllib.parse import unquote
 from app.config.firestore import db
 from fastapi import HTTPException
 from datetime import datetime
@@ -73,8 +74,12 @@ async def addPackage(packageDataInput, currentUser):
 # get detail package from packageOrderCollection
 async def getPackageDetail(orderNo):
     try:
-        orderNoFiltered = orderNo.replace("/", "_")
+        # decode url 
+        orderNo = unquote(orderNo)
 
+        # firestore not allow / in document names
+        orderNoFiltered = orderNo.replace("/", "_")
+        
         packageDoc = db.collection("packageOrderCollection").document(orderNoFiltered).get()
         if not packageDoc.exists:
             raise HTTPException(
@@ -118,13 +123,13 @@ async def getPackageDetail(orderNo):
 # GET all packages from packageDeliveryCollection
 async def getAllPackages():
     # db = get_db()
-    packageDeliveryCollection = db.collection("packageDeliveryCollection")
+    packageDeliveryCollection = db.collection("packageOrderCollection")
     allPackages = packageDeliveryCollection.stream()
     packageList = []
     for package in allPackages:
         packageList.append(package.to_dict())
     return {
         "status": "success",
-        "message": "Berhasil mendapatkan semua paket",
+        "message": "Berhasil mendapatkan semua order paket",
         "data": packageList
     }
