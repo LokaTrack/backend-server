@@ -1,5 +1,6 @@
 
 import urllib
+from urllib.parse import unquote
 from app.config.firestore import db
 from fastapi import HTTPException
 from datetime import datetime
@@ -87,7 +88,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error tidak terduga: {str(e)}")
+        logger.error(f"Unexpected error during package status update for '{deliveryDataInput.orderNo}': {str(e)}")
         raise HTTPException(
             status_code=500,
             detail={
@@ -164,12 +165,28 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                     "timestamp": datetime.now().isoformat()
                 }
             )
+
+        time_field_mapping = {
+            "checkin": "checkInTime",
+            "checkout": "checkOutTime",
+            "return": "returnTime"
+        }
+        time_field_to_update = time_field_mapping.get(next_status)
+
+        update_data = {
+            "deliveryStatus": next_status,
+            "lastUpdateTime": datetime.now().isoformat()
+        }
+
+        if time_field_to_update:
+            update_data[time_field_to_update] = datetime.now().isoformat()
         
-        packageDeliveryData.update({
-            "deliveryStatus": deliveryDataInput.deliveryStatus,
-            "checkInTime": deliveryDataInput.checkInTime,
-            "lastUpdateTime": deliveryDataInput.lastUpdateTime,
-        })
+        packageDeliveryData.update(update_data)        
+        # packageDeliveryData.update({
+        #     "deliveryStatus": deliveryDataInput.deliveryStatus,
+        #     "checkInTime": deliveryDataInput.checkInTime,
+        #     "lastUpdateTime": deliveryDataInput.lastUpdateTime,
+        # })
                 
                
         db.collection("packageDeliveryCollection").document(orderNoFiltered).update(packageDeliveryData)
@@ -192,7 +209,48 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                 "timestamp": datetime.now().isoformat()
             }
         )
+
+async def getPackageDeliveryById(orderNo):
+    try:
+        orderNo = unquote(orderNo)
+        orderNoFiltered = orderNo.replace("/", "_")
+        # Get package delivery data by ID
+        packageDeliveryDoc = (
+            db.collection("packageDeliveryCollection")
+            .document(orderNoFiltered)
+            .get()
+        )
+        if not packageDeliveryDoc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": f"Paket dengan id '{orderNo}' tidak ditemukan.",
+                    "timestamp": datetime.now().isoformat()
+                }
+            )
+        
+        packageDeliveryData = packageDeliveryDoc.to_dict()
+        
+        return {
+            "status": "success",
+            "message": "Mengambil data pengiriman berhasil",
+            "data": packageDeliveryData
+        }
     
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error during package status update for '{deliveryDataInput.orderNo}': {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Terjadi kesalahan: {str(e)}",
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+
 async def getAllPackageDelivery():
     try:
         # Get all package delivery data
@@ -218,7 +276,7 @@ async def getAllPackageDelivery():
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error tidak terduga: {str(e)}")
+        logger.error(f"Unexpected error during package status update for '{deliveryDataInput.orderNo}': {str(e)}")
         raise HTTPException(
             status_code=500,
             detail={

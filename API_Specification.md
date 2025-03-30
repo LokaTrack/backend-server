@@ -482,6 +482,98 @@ If fail - internal error (Status code 500):
 }
 ```
 
+## 2. Update Delivery Status
+Updates the delivery status of a package. The status must follow the valid transition rules:
+> delivery → checkin → checkout → return
+
+
+- URL
+  - `/api/v1/delivery`
+
+- Method
+  - `PUT`
+
+- Header 
+  - `Authorization: Bearer <token>`
+
+- Request Body:
+  - `orderNo` as `string`, 
+  - `deliveryStatus` as string
+    > Possible values: "delivery", "checkin", "checkout", "return"
+
+### Success
+```json
+{
+    "status": "success",
+    "message": "Status paket 'OB/01-2025/104' berhasil diupdate",
+    "data": {
+        "orderNo": "OB/01-2025/104",
+        "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+        "deliveryStatus": "checkout",
+        "customer": "John Doe",
+        "address": "123 Main Street, Central Jakarta",
+        "totalWeight": 6.7,
+        "totalPrice": 576000.0,
+        "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+        "deliveryStartTime": "2025-03-30T15:00:54.307042+00:00",
+        "checkInTime": "2025-03-31T03:17:59.852427",
+        "checkOutTime": "2025-03-31T03:18:31.059068",                
+        "returnTime": "2025-03-31T03:18:21.226109",
+        "lastUpdateTime": "2025-03-31T03:18:31.059068"
+    }
+}
+```
+
+### Fail
+```json
+{
+    "status": "fail",
+    "message": "Tidak bisa mengubah status paket dari 'checkout' menjadi 'delivery'.",
+    "timestamp": "2025-03-31T03:24:06.140512"
+}
+```
+
+
+## 3. Get Delivery Detail
+  - `/api/v1/delivery/{orderNo}`
+
+- Method
+  - `GET`
+
+- Header 
+  - `Authorization: Bearer <token>`
+
+- Path Parameters:
+  - `orderNo` as `string`
+
+**Note**: The `orderNo` must be DOUBLE URL-encoded, example:   
+  - Original order number: `OB/01-2025/19129`
+  - Single-encoded (NOT WORKING): `OB%2F01-2025%2F19129`
+  - Double-encoded (CORRECT): `OB%252F01-2025%252F19129`
+
+### Success
+```json
+{
+    "status": "success",
+    "message": "Mengambil data pengiriman berhasil",
+    "data": {
+        "orderNo": "OB/01-2025/104",
+        "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+        "deliveryStatus": "checkout",
+        "customer": "John Doe",
+        "address": "123 Main Street, Central Jakarta",
+        "totalWeight": 6.7,
+        "totalPrice": 576000.0,
+        "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+        "deliveryStartTime": "2025-03-30T15:00:54.307042+00:00",
+        "checkInTime": "2025-03-31T03:17:59.852427",
+        "checkOutTime": "2025-03-31T03:18:31.059068",                
+        "returnTime": "2025-03-31T03:18:21.226109",
+        "lastUpdateTime": "2025-03-31T03:18:31.059068"
+    }
+}
+```
+
 # User Endpoint
 ## Dashboard
 - URL

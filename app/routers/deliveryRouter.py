@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from app.models.deliveryModel import packageDeliveryModel, updateDeliveryStatusModel
-from app.services.deliveryService import startDeliveryPackage, updateDeliveryStatus, getAllPackageDelivery
+from app.services.deliveryService import startDeliveryPackage, updateDeliveryStatus, getPackageDeliveryById, getAllPackageDelivery
 from app.utils.auth import get_current_user
 
 
@@ -33,7 +33,22 @@ async def updateDeliveryRouter(deliveryDataInput:updateDeliveryStatusModel, curr
             content=e.detail
        )
     
-@router.get("/delivery/all", status_code=200)
+@router.get("/delivery/{orderNo}", status_code=200)
+async def getPackageRouter(
+    orderNo: str,
+    currentUser: dict = Depends(get_current_user)
+    ):
+    """Get Package Delivery Detail ID"""
+    try:
+        result = await getPackageDeliveryById(orderNo)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+       )
+
+@router.get("/delivery/all/delivery", status_code=200)
 async def getAllPackageRouter ():
     """Get All Package Delivery"""
     try:
