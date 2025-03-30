@@ -4,10 +4,10 @@ from datetime import datetime
 from enum import Enum
 
 class deliveryStatusEnum(str, Enum):
-    delivery = "dikirim"
-    checkin = "sampai"
-    checkout = "selesai"
-    returned = "dikembalikan"  
+    delivery = "delivery"
+    checkin = "checkin"
+    checkout = "checkout"
+    returned = "return"  
 
 # package delivery model
 class packageDeliveryModel(BaseModel):
