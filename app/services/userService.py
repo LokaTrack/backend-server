@@ -15,10 +15,10 @@ async def getDashboard (currentUser):
         today_end = today_start + timedelta(days=1) - timedelta(seconds=1)
         # statistic 
         statistics = {
-            "dikirim": 0,
-            "sampai": 0,
-            "selesai": 0,
-            "dikembalikan": 0,
+            "delivery": 0,
+            "checkin": 0,
+            "checkout": 0,
+            "return": 0,
             "others": 0,
             "percentage" : 0
         }
@@ -57,7 +57,7 @@ async def getDashboard (currentUser):
         #     else :
         #         statistics["others"] += 1
 
-        status_mapping = {"dikirim": "dikirim", "sampai": "sampai", "selesai": "selesai", "dikembalikan": "dikembalikan"}
+        status_mapping = {"delivery": "delivery", "checkin": "checkin", "checkout": "checkout", "return": "dikreturnembalikan"}
 
         for x in recentOrder:
             key = status_mapping.get(x.get("deliveryStatus"), "others")
@@ -65,7 +65,7 @@ async def getDashboard (currentUser):
 
         if totalPackage > 0:
             # Consider both selesai and dikembalikan as completed
-            completed = statistics["selesai"] + statistics["dikembalikan"]
+            completed = statistics["checkout"] + statistics["return"]
             statistics["percentage"] = int((completed / totalPackage) * 100)
 
         data = {
