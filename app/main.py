@@ -24,7 +24,7 @@ app.add_exception_handler(Exception, general_exception_handler)
 app.add_exception_handler(404, not_found_exception_handler)
 app.add_exception_handler(405, method_not_allowed_exception_handler)
 
-@app.get("/", tags=["Root"])
+@app.get("/api/v1", tags=["Root"])
 async def root():
     return {
         "status": "success", 

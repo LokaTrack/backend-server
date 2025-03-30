@@ -5,7 +5,6 @@ import os
 import json
 from dotenv import load_dotenv
 
-# Konfigurasi logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 if not PROJECT_ID and not GOOGLE_APPLICATION_CREDENTIALS:
     logger.warning("PROJECT_ID or GOOGLE_APPLICATION_CREDENTIALS environment variable not set")
-    db = None  # Tetap lanjutkan tanpa Firestore
+    db = None  
 else:
     db = None
 
@@ -76,7 +75,7 @@ else:
         logger.critical(f"Firestore initialization failed: {e}")
         db = None
 
-# Cek apakah koneksi ke Firestore berhasil
+# Check if Firestore connection is successful
 if db is None:
     logger.warning("Firestore client is None, continuing execution without Firestore.")
 else:

@@ -3,17 +3,14 @@ from google.cloud import storage
 import os
 from dotenv import load_dotenv
 
-# Konfigurasi logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv()
 
 bucket_name = os.getenv("GCS_BUCKET_NAME")
 if not bucket_name:
     logger.warning("GCS_BUCKET_NAME environment variable not set")
-    storage_client = None  # Tetap lanjutkan eksekusi tanpa storage client
+    storage_client = None  
 else:
     storage_client = None
     try:
@@ -51,7 +48,7 @@ else:
         logger.critical(f"Cloud Storage initialization failed: {str(e)}")
         storage_client = None
 
-# Cek apakah koneksi ke Cloud Storage berhasil
+# check if storage connection is successful
 if storage_client is None:
     logger.warning("Cloud Storage client is None, continuing execution without cloud storage.")
 else:

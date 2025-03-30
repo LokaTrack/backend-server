@@ -24,3 +24,10 @@ class packageDeliveryModel(BaseModel):
     checkOutTime: Optional[datetime] = None
     lastUpdateTime: datetime = Field(default_factory=datetime.now)
     
+
+class updateDeliveryStatusModel(BaseModel):
+    orderNo: str
+    deliveryStatus: deliveryStatusEnum 
+    checkInTime: Optional[datetime] = None
+    checkOutTime: Optional[datetime] = None
+    lastUpdateTime: datetime = Field(default_factory=datetime.now)
