@@ -229,6 +229,18 @@ if fail - Password too short (400 Bad Request)
 }
 ```
 
+## 5. Update Profile Picture
+- URL
+  - `/api/v1/profile/profile-picture`
+
+- Method
+  - `PUT`
+
+- Request Body form data
+  - `profilePicture` as `string`
+
+
+
 
 # Package Endpoint
 ## 1. Add Package
