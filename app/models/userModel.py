@@ -47,6 +47,7 @@ class UserModel(BaseModel):
     username: str
     role: UserRole = UserRole.DRIVER
     phoneNumber: Optional[str] = None
+    profilePictureUrl: Optional[str] = None
     
     # `default_factory` to generate the value dynamically
     registrationDate: datetime = Field(default_factory=datetime.now)

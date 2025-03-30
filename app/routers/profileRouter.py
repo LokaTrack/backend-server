@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, File, HTTPException, Depends, UploadFile, status, Form
 from fastapi.responses import JSONResponse
 from app.models.userModel import UpdatePasswordModel, updatePhoneNumberModel, UpdateUsernameModel
 from app.utils.auth import get_current_user
-from app.services.profileService import updatePasswordService, updatePhoneNumberService, updateUsernameService, getUserProfile
+from app.services.profileService import updatePasswordService, updatePhoneNumberService, updateUsernameService, getUserProfile, updateProfilePictureService
 
 router = APIRouter(prefix="/api/v1", tags=["Profile"])
 
@@ -47,6 +47,21 @@ async def updatePhoneNumber(phoneDataInput: updatePhoneNumberModel, currentUser:
     """Update phone number"""
     try:
         result = await updatePhoneNumberService(phoneDataInput, currentUser)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+        )
+    
+
+@router.put("/profile/picture")
+async def updateProfilePicture(
+    profilePicture : UploadFile = File (...), 
+    currentUser: dict = Depends(get_current_user)):
+    """Update profile picture"""
+    try : 
+        result = await updateProfilePictureService(profilePicture, currentUser)
         return result
     except HTTPException as e:
         return JSONResponse(

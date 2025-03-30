@@ -1,5 +1,6 @@
 from app.config.firestore import db
 from app.utils.security import getPasswordHash, verifyPassword
+from app.utils.storeImage import uploadImageToStorage
 from fastapi import HTTPException
 from datetime import datetime
 
@@ -147,3 +148,85 @@ async def updatePasswordService(passwordDataInput, currentUser):
             }
         )
     
+async def updateProfilePictureService (profilePictureFile, currentUser): 
+    """ Update Profile Picture"""
+    try:
+        file_size = await profilePictureFile.read()
+        max_size = 1024 * 1024 * 5 # 5mb
+
+        if len (file_size) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "fail",
+                    "message": "Ukuran file terlalu besar, maksimal 5MB",
+                    "timestamp": datetime.now().isoformat()
+                }
+            )
+
+        # Reset file position 
+        await profilePictureFile.seek(0)
+
+        content_type = profilePictureFile.content_type
+        if not content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "fail",
+                    "message": "File harus berupa gambar (jpg, png, gif)",
+                    "timestamp": datetime.now().isoformat()
+                }
+            )    
+                                                                                    #{datetime.now().strftime('%Y%m%d%H%M%S')}    
+        filename = f"{currentUser['userId']}_{currentUser['username']}_profile_picture"
+        file_extension = profilePictureFile.filename.split(".")[-1]
+        full_filename = f"{filename}.{file_extension}"
+        
+        # Upload file to storage
+        profile_picture_url = await uploadImageToStorage(
+            profilePictureFile, 
+            "profile-pictures",  # Folder in storage bucket
+            full_filename
+        )
+        
+        # Update user profile with new picture URL
+        userDoc = (
+            db.collection("userCollection")
+            .document(currentUser["userId"])
+        )
+        
+        if not userDoc.get().exists:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": "User tidak ditemukan",
+                    "timestamp": datetime.now().isoformat()
+                }
+            )
+        
+        # Update profile picture URL in database
+        userDoc.update({
+            "profilePictureUrl": profile_picture_url,
+            "lastUpdate": datetime.now().isoformat()
+        })
+        
+        return {
+            "status": "success",
+            "message": "Foto profil berhasil diperbarui",
+            "data": {
+                "profilePictureUrl": profile_picture_url
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Terjadi kesalahan: {str(e)}",
+                "timestamp": datetime.now().isoformat()
+            }
+        )
