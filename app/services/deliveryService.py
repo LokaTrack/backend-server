@@ -241,7 +241,7 @@ async def getPackageDeliveryById(orderNo):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Unexpected error during package status update for '{deliveryDataInput.orderNo}': {str(e)}")
+        logger.error(f"Unexpected error during get delivery detail for '{orderNo}': {str(e)}")
         raise HTTPException(
             status_code=500,
             detail={
@@ -276,7 +276,7 @@ async def getAllPackageDelivery():
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Unexpected error during package status update for '{deliveryDataInput.orderNo}': {str(e)}")
+        logger.error(f"Unexpected error during get all pacakge :' {str(e)}")
         raise HTTPException(
             status_code=500,
             detail={
