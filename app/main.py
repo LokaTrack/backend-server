@@ -9,7 +9,7 @@ from app.utils.error import (
     method_not_allowed_exception_handler
 )
 
-app = FastAPI (title= "Lokatani GPS Tracking API")
+app = FastAPI (title= "Lokatani GPS Tracking API", docs_url="/api/v1/docs")
 
 # Include routers
 app.include_router(authRouter.router)
