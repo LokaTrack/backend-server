@@ -575,7 +575,7 @@ Updates the delivery status of a package. The status must follow the valid trans
 ```
 
 # User Endpoint
-## Dashboard
+## 1. Dashboard
 - URL
   - `/api/v1/dashboard`
 
@@ -602,7 +602,7 @@ Updates the delivery status of a package. The status must follow the valid trans
         "recentOrder": [
             {
                 "orderNo": "OB/01-2025/1",
-                "deliveryStatus": "dikirim",
+                "deliveryStatus": "delivery",
                 "checkInTime": null,
                 "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
                 "totalWeight": 6.7,
@@ -616,7 +616,7 @@ Updates the delivery status of a package. The status must follow the valid trans
             },
             {
                 "orderNo": "OB/01-2025/2",
-                "deliveryStatus": "dikembalikan",
+                "deliveryStatus": "return",
                 "checkInTime": null,
                 "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
                 "totalWeight": 6.7,
@@ -630,7 +630,7 @@ Updates the delivery status of a package. The status must follow the valid trans
             },
             {
                 "orderNo": "OB/01-2025/5",
-                "deliveryStatus": "selesai",
+                "deliveryStatus": "checkout",
                 "checkInTime": null,
                 "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
                 "totalWeight": 6.7,
@@ -644,7 +644,7 @@ Updates the delivery status of a package. The status must follow the valid trans
             },
             {
                 "orderNo": "OB/01-2025/2",
-                "deliveryStatus": "dikirim",
+                "deliveryStatus": "delivery",
                 "checkInTime": null,
                 "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
                 "totalWeight": 6.7,
@@ -658,7 +658,7 @@ Updates the delivery status of a package. The status must follow the valid trans
             },
             {
                 "orderNo": "OB/01-2025/19129",
-                "deliveryStatus": "dikirim",
+                "deliveryStatus": "delivery",
                 "checkInTime": null,
                 "lastUpdateTime": "2025-03-27T16:48:00.956517+00:00",
                 "totalWeight": 6.7,
@@ -672,7 +672,7 @@ Updates the delivery status of a package. The status must follow the valid trans
             },
             {
                 "orderNo": "OB/01-2025/4",
-                "deliveryStatus": "sampai",
+                "deliveryStatus": "checkin",
                 "checkInTime": null,
                 "lastUpdateTime": "2025-03-27T16:48:00.956000+00:00",
                 "totalWeight": 6.7,
@@ -684,6 +684,77 @@ Updates the delivery status of a package. The status must follow the valid trans
                 "deliveryStartTime": "2025-03-30T16:48:00.795000+00:00",
                 "checkOutTime": null
             }
+        ]
+    }
+}
+```
+
+
+## 2. History
+- URL
+  - `/api/v1/history`
+
+- Method
+  - `GET`
+
+- Header 
+  - `Authorization: Bearer <token>`
+
+### Sucess
+```json
+{
+    "status": "success",
+    "message": "Mengambil data history berhasil",
+    "data": {
+        "statistics": {
+            "success": 2,
+            "return": 2,
+            "totalDelivery": 4
+        },
+        "history": [
+            {
+                "orderNo": "OB/01-2025/1",
+                "deliveryStatus": "checkout",
+                "checkInTime": "2025-03-31T01:48:03.003743+00:00",
+                "lastUpdateTime": "2025-03-31T01:48:03.003743+00:00",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T16:48:00.049000+00:00",
+                "checkOutTime": "2025-03-31T01:48:03.003743+00:00"
+            },
+            {
+                "orderNo": "OB/01-2025/104",
+                "deliveryStatus": "return",
+                "checkInTime": "2025-03-31T03:17:59.852427",
+                "returnTime": "2025-03-31T03:37:24.011971",
+                "lastUpdateTime": "2025-03-31T03:37:24.011971",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T15:00:54.307042+00:00",
+                "checkOutTime": "2025-03-31T03:18:31.059068"
+            },
+            {
+                "orderNo": "OB/01-2025/111",
+                "deliveryStatus": "checkout",
+                "checkInTime": "2025-03-31T01:48:03.003743+00:00",
+                "lastUpdateTime": "2025-03-31T03:16:42.973812",
+                "totalWeight": 6.7,
+                "customer": "John Doe",
+                "address": "123 Main Street, Central Jakarta",
+                "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+                "totalPrice": 576000,
+                "deliveryStartTime": "2025-03-30T20:02:22.314527+00:00",
+                "checkOutTime": "2025-03-31T03:16:42.973812"
+            },
         ]
     }
 }
