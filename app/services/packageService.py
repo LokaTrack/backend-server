@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from datetime import datetime, timezone
 from app.models.deliveryModel import packageDeliveryModel
 from app.utils.location import getPackageLocation
+from app.utils.time import convert_utc_to_wib
 
 # ADD Package to packageCollection
 async def addPackage(packageDataInput, currentUser):
@@ -57,6 +58,10 @@ async def addPackage(packageDataInput, currentUser):
             item_doc_id = f"item_{i+1}"
             items_collection.document(item_doc_id).set(item)
         
+        orderData.update({
+            "orderDate": convert_utc_to_wib(orderData["orderDate"])
+        })
+
         return {
             "status": "success",
             "message": "Order berhasil ditambahkan",
@@ -114,7 +119,11 @@ async def getPackageDetail(orderNo):
         #     items_list.append(item_doc.to_dict())
         items_list = [item_doc.to_dict() for item_doc in items_collection]
         packageData["items"] = items_list                      
-
+        
+        packageData.update({
+            "orderDate": convert_utc_to_wib(packageData["orderDate"]),
+        })
+        
         return {
             "status": "success",
             "message": "Berhasil mendapatkan detail paket",
@@ -137,10 +146,10 @@ async def getPackageDetail(orderNo):
 # GET all packages from packageDeliveryCollection
 async def getAllPackages():
     # db = get_db()
-    packageDeliveryCollection = db.collection("packageOrderCollection")
-    allPackages = packageDeliveryCollection.stream()
+    packageDeliveryRef = db.collection("packageOrderCollection")
+    packageDeliveryDocs = packageDeliveryRef.stream()
     packageList = []
-    for package in allPackages:
+    for package in packageDeliveryDocs:
         packageList.append(package.to_dict())
     return {
         "status": "success",

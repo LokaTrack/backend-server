@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from datetime import datetime, timezone
 from app.utils.location import getPackageLocation
 from uuid import uuid4
+from app.utils.time import convert_utc_to_wib
 import logging
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,12 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
         })
 
         db.collection("packageDeliveryCollection").document(orderNoFiltered).set(newPackageData)
-
+        
+        # update to wib
+        newPackageData.update({
+            "deliveryStartTime": convert_utc_to_wib(newPackageData["deliveryStartTime"]),
+            "lastUpdateTime": convert_utc_to_wib(newPackageData["lastUpdateTime"]),
+        })
         return {
             "status": "success",
             "message": "Paket berhasil ditambahkan ke delivery",
@@ -173,11 +179,11 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
 
         update_data = {
             "deliveryStatus": next_status,
-            "lastUpdateTime": datetime.now(timezone.utc).isoformat()
+            "lastUpdateTime": datetime.now(timezone.utc)
         }
 
         if time_field_to_update:
-            update_data[time_field_to_update] = datetime.now(timezone.utc).isoformat()
+            update_data[time_field_to_update] = datetime.now(timezone.utc)
         
         packageDeliveryData.update(update_data)        
         # packageDeliveryData.update({
@@ -188,6 +194,12 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                 
                
         db.collection("packageDeliveryCollection").document(orderNoFiltered).update(packageDeliveryData)
+
+        # update to wib
+        time_fields = ["deliveryStartTime", "checkInTime", "checkOutTime", "returnTime", "lastUpdateTime"]
+        for field in time_fields:
+            if field in packageDeliveryData and packageDeliveryData[field]:
+                packageDeliveryData[field] = convert_utc_to_wib(packageDeliveryData[field])
 
         return {
             "status": "success",
@@ -230,6 +242,12 @@ async def getPackageDeliveryById(orderNo):
         
         packageDeliveryData = packageDeliveryDoc.to_dict()
         
+        # Convert time fields to WIB
+        time_fields = ["deliveryStartTime", "checkInTime", "checkOutTime", "returnTime", "lastUpdateTime"]
+        for field in time_fields:
+            if field in packageDeliveryData and packageDeliveryData[field]:
+                packageDeliveryData[field] = convert_utc_to_wib(packageDeliveryData[field])
+          
         return {
             "status": "success",
             "message": "Mengambil data pengiriman berhasil",

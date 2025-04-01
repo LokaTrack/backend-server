@@ -29,7 +29,7 @@ class orderItemModel(BaseModel):
 # Package order model
 class packageOrderModel(BaseModel):
     orderNo: str
-    orderDate: datetime = Field(default_factory=lambda :datetime.now(timezone.utc))
+    orderDate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     customer: str
     address: str
     addressMapUrl: Optional[str] = None

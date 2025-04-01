@@ -1,18 +1,16 @@
 from app.config.firestore import db
-from app.models.userModel import UserModel
-from app.utils.security import getPasswordHash, verifyPassword, createAccessToken
+from app.utils.time import convert_utc_to_wib, get_wib_day_range
 from fastapi import HTTPException
-from firebase_admin import auth
-import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import logging
 logger = logging.getLogger(__name__)
 
 async def getDashboard (currentUser):
     """Get user dashboard data"""
     try: 
-        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = today_start + timedelta(days=1) - timedelta(seconds=1)
+        today_start, today_end = get_wib_day_range()
+        # today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        # today_end = today_start + timedelta(days=1) - timedelta(seconds=1)
         # statistic 
         statistics = {
             "delivery": 0,
@@ -73,6 +71,12 @@ async def getDashboard (currentUser):
             completed = statistics["checkout"] + statistics["return"]
             statistics["percentage"] = int((completed / totalPackage) * 100)
 
+        # convert all timestamps in response to WIB
+        for order in recentOrder:
+            for time_field in ["deliveryStartTime", "checkInTime", "checkOutTime", "returnTime", "lastUpdateTime"]:
+                if time_field in order and order[time_field]:
+                    order[time_field] = convert_utc_to_wib(order[time_field]).isoformat()
+        
         data = {
                 "statistics" : statistics,
                 "recentOrder": recentOrder,
@@ -101,6 +105,7 @@ async def getHistory (currentUser):
         statistics = {
             "success": 0,
             "return": 0,
+            "totalDelivery": 0,
         }
         historyDocs = (
             db.collection("packageDeliveryCollection")
@@ -112,7 +117,7 @@ async def getHistory (currentUser):
                 "status": "success",
                 "message": f"Tidak ada data pengiriman untuk user '{currentUser['username']}'.",
                 "data": { "statistics": statistics, "history": [] },
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": convert_utc_to_wib(datetime.now(timezone.utc).isoformat())
             }
         
         # for history in historyDocs :
@@ -137,9 +142,13 @@ async def getHistory (currentUser):
             if status in status_mapping:
                 historyDelivery.append(historyData)
                 statistics[status_mapping[status]] += 1
+                # convert all timestamps in response to WIB
+                timestamp_fields = ["checkInTime", "checkOutTime", "deliveryStartTime", "lastUpdateTime", "returnTime", "timestamp"]
+                for field in timestamp_fields:
+                    if field in historyData and historyData[field]:
+                        historyData[field] = convert_utc_to_wib(historyData[field]).isoformat()
         
-        totalDelivery = len(historyDelivery)
-        statistics.update({"totalDelivery" : totalDelivery})
+        statistics["totalDelivery"] = len (historyDelivery)
 
         data = {
             "statistics" : statistics,
