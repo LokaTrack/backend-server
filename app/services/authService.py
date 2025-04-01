@@ -4,6 +4,7 @@ from app.models.authModel import OtpVerificationModel
 from app.utils.security import getPasswordHash, verifyPassword, createAccessToken
 from app.utils.email import sendEmail
 from app.utils.template import renderTemplate
+from app.utils.time import convert_utc_to_wib
 from fastapi import HTTPException
 from datetime import datetime, timezone
 import logging
@@ -191,10 +192,15 @@ async def requestResetPassword (emailUser) :
             "otpTimestamp": otpData.expiresAt
         })
 
+        # Generate current date in WIB format
+        current_date_wib = convert_utc_to_wib(datetime.now(timezone.utc))
+        formatted_date = current_date_wib.strftime("%A, %d %B %Y, %H:%M WIB")
+
         html_content = renderTemplate(
             "password_reset.html",
             username=userData.get('username', ''),
-            otp=otpData.otp
+            otp=otpData.otp,
+            current_date=formatted_date
         )
 
         result = sendEmail (

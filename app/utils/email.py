@@ -22,7 +22,6 @@ def sendEmail(to_email, subject, html_content, text_content=None):
     if not text_content:
         # Strip HTML tags for text version if not provided
         text_content = html_content.replace('<br>', '\n').replace('</p>', '\n\n')
-        # Basic HTML tag removal (could be enhanced)
         import re
         text_content = re.sub('<[^<]+?>', '', text_content)
     
