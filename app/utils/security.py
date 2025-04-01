@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 from typing import Optional
 import os
@@ -41,7 +41,7 @@ def createAccessToken(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         # data from .env always in string format
         expired_days = int(os.getenv("ACCESS_TOKEN_EXPIRED_DAYS"), 30)  # Default to 30 days if not set
-        expire = datetime.utcnow() + timedelta(days=expired_days)
+        expire = datetime.utcnow(timezone.utc) + timedelta(days=expired_days)
         
     dataToEncode.update({"exp": expire})
     encoded_jwt = jwt.encode(dataToEncode, os.getenv("SECRET_KEY"), os.getenv("ALGORITHM"))
@@ -63,7 +63,7 @@ def verifyAccessToken(token: str):
             detail={
                 "status": "fail",
                 "message": "Token kedaluwarsa, silakan login kembali.",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -73,7 +73,7 @@ def verifyAccessToken(token: str):
             detail={
                 "status": "fail",
                 "message": "Token tidak valid",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
     except Exception as e:
@@ -82,7 +82,7 @@ def verifyAccessToken(token: str):
             detail={
                 "status": "fail",
                 "message": f"Error verifikasi token: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 

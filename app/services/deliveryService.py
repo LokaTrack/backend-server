@@ -3,9 +3,7 @@ import urllib
 from urllib.parse import unquote
 from app.config.firestore import db
 from fastapi import HTTPException
-from datetime import datetime
-from app.models.packageModel import  packageOrderModel, orderItemModel
-from app.models.deliveryModel import packageDeliveryModel
+from datetime import datetime, timezone
 from app.utils.location import getPackageLocation
 from uuid import uuid4
 import logging
@@ -21,7 +19,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": "Anda tidak memiliki akses untuk menambahkan order.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         
@@ -41,7 +39,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": f"Paket dengan id '{deliveryDataInput.orderNo}' tidak ditemukan.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         packageOrderDoc = packageOrderDoc.to_dict()
@@ -59,7 +57,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": f"Paket dengan id '{deliveryDataInput.orderNo}' sudah dalam status '{status}'.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         
@@ -94,7 +92,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
     
@@ -109,7 +107,7 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": "Anda tidak memiliki akses untuk mengupdate order.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )       
         
@@ -129,7 +127,7 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": f"Paket dengan id '{deliveryDataInput.orderNo}' tidak ditemukan.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         
@@ -142,7 +140,7 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": f"Anda tidak memiliki akses untuk mengupdate paket dengan id '{deliveryDataInput.orderNo}'.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         # status -> "delivery", "checkin", "checkout", "return"
@@ -162,7 +160,7 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": f"Tidak bisa mengubah status paket dari '{current_status}' menjadi '{next_status}'.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -175,11 +173,11 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
 
         update_data = {
             "deliveryStatus": next_status,
-            "lastUpdateTime": datetime.now().isoformat()
+            "lastUpdateTime": datetime.now(timezone.utc).isoformat()
         }
 
         if time_field_to_update:
-            update_data[time_field_to_update] = datetime.now().isoformat()
+            update_data[time_field_to_update] = datetime.now(timezone.utc).isoformat()
         
         packageDeliveryData.update(update_data)        
         # packageDeliveryData.update({
@@ -206,7 +204,7 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -226,7 +224,7 @@ async def getPackageDeliveryById(orderNo):
                 detail={
                     "status": "fail",
                     "message": f"Paket dengan id '{orderNo}' tidak ditemukan.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         
@@ -247,7 +245,7 @@ async def getPackageDeliveryById(orderNo):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -282,6 +280,6 @@ async def getAllPackageDelivery():
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )

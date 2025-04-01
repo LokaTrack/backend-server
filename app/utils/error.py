@@ -2,7 +2,7 @@ from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -20,7 +20,7 @@ class ErrorResponse:
         self.body = {
             "status": status,
             "message": message,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         if errors:
             self.body["errors"] = errors

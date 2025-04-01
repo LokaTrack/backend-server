@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 class deliveryStatusEnum(str, Enum):
@@ -19,10 +19,10 @@ class packageDeliveryModel(BaseModel):
     totalPrice: Optional [float] = 0
     deliveryStatus: deliveryStatusEnum = deliveryStatusEnum.delivery
     trackerId: Optional[str] = "Ue2KlB6IMPdfoBN4CR2b"    
-    deliveryStartTime: datetime = Field(default_factory=datetime.now)
+    deliveryStartTime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     checkInTime: Optional[datetime] = None
     checkOutTime: Optional[datetime] = None
-    lastUpdateTime: datetime = Field(default_factory=datetime.now)
+    lastUpdateTime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
 
 class updateDeliveryStatusModel(BaseModel):
@@ -30,4 +30,4 @@ class updateDeliveryStatusModel(BaseModel):
     deliveryStatus: deliveryStatusEnum 
     checkInTime: Optional[datetime] = None
     checkOutTime: Optional[datetime] = None
-    lastUpdateTime: datetime = Field(default_factory=datetime.now)
+    lastUpdateTime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

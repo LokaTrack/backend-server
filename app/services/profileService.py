@@ -2,7 +2,7 @@ from app.config.firestore import db
 from app.utils.security import getPasswordHash, verifyPassword
 from app.utils.storeImage import uploadImageToStorage
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import datetime, timezone
 
 async def getUserProfile(currentUser):
     """Get user profile"""
@@ -22,7 +22,7 @@ async def getUserProfile(currentUser):
             detail={
                 "status": "fail",
                 "message": "User tidak ditemukan",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
     
@@ -43,7 +43,7 @@ async def updateUsernameService(usernameDataInput, currentUser):
             detail={
                 "status": "fail",
                 "message": "Update username gagal",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
     
@@ -64,7 +64,7 @@ async def updatePhoneNumberService(phoneDataInput, currentUser):
             detail={
                 "status": "fail",
                 "message": "Update nomor telepon gagal",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
     
@@ -81,7 +81,7 @@ async def updatePasswordService(passwordDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": "User tidak ditemukan",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -91,7 +91,7 @@ async def updatePasswordService(passwordDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": "Password lama anda salah",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
     
@@ -101,7 +101,7 @@ async def updatePasswordService(passwordDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": "Password baru tidak boleh sama dengan password lama",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -111,7 +111,7 @@ async def updatePasswordService(passwordDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": "Password baru dan konfirmasi password tidak sama",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         
@@ -122,14 +122,14 @@ async def updatePasswordService(passwordDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": "Password baru harus memiliki minimal 8 karakter",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
         newHashedPassword = getPasswordHash(passwordDataInput.newPassword)
         newData = {
             "hashedPassword": newHashedPassword,
-            "lastUpdate": datetime.now().isoformat()
+            "lastUpdate": datetime.now(timezone.utc).isoformat()
         }
         userCollection.document(currentUser["userId"]).update(newData)
         return {
@@ -144,7 +144,7 @@ async def updatePasswordService(passwordDataInput, currentUser):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
     
@@ -160,7 +160,7 @@ async def updateProfilePictureService (profilePictureFile, currentUser):
                 detail={
                     "status": "fail",
                     "message": "Ukuran file terlalu besar, maksimal 5MB",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -174,10 +174,10 @@ async def updateProfilePictureService (profilePictureFile, currentUser):
                 detail={
                     "status": "fail",
                     "message": "File harus berupa gambar (jpg, png, gif)",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )    
-                                                                                    #{datetime.now().strftime('%Y%m%d%H%M%S')}    
+                                                                                    #{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}    
         filename = f"{currentUser['userId']}_{currentUser['username']}_profile_picture"
         file_extension = profilePictureFile.filename.split(".")[-1]
         full_filename = f"{filename}.{file_extension}"
@@ -201,14 +201,14 @@ async def updateProfilePictureService (profilePictureFile, currentUser):
                 detail={
                     "status": "fail",
                     "message": "User tidak ditemukan",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         
         # Update profile picture URL in database
         userDoc.update({
             "profilePictureUrl": profile_picture_url,
-            "lastUpdate": datetime.now().isoformat()
+            "lastUpdate": datetime.now(timezone.utc).isoformat()
         })
         
         return {
@@ -227,6 +227,6 @@ async def updateProfilePictureService (profilePictureFile, currentUser):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )

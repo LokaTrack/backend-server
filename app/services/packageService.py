@@ -2,7 +2,7 @@ import urllib
 from urllib.parse import unquote
 from app.config.firestore import db
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.deliveryModel import packageDeliveryModel
 from app.utils.location import getPackageLocation
 
@@ -16,7 +16,7 @@ async def addPackage(packageDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": "Anda tidak memiliki akses untuk menambahkan order.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         orderData = packageDataInput.dict()
@@ -36,7 +36,7 @@ async def addPackage(packageDataInput, currentUser):
                 detail={
                     "status": "fail",
                     "message": f"Order dengan nomor '{orderData['orderNo']}' sudah ada",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -70,7 +70,7 @@ async def addPackage(packageDataInput, currentUser):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -95,7 +95,7 @@ async def getPackageDetail(orderNo):
                 detail={
                     "status": "fail",
                     "message": f"Paket dengan id '{orderNo}' tidak ditemukan.",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         packageData = packageDoc.to_dict()
@@ -129,7 +129,7 @@ async def getPackageDetail(orderNo):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 

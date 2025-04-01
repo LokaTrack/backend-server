@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 # Order item model
@@ -29,7 +29,7 @@ class orderItemModel(BaseModel):
 # Package order model
 class packageOrderModel(BaseModel):
     orderNo: str
-    orderDate: datetime = Field(default_factory=datetime.now)
+    orderDate: datetime = Field(default_factory=lambda :datetime.now(timezone.utc))
     customer: str
     address: str
     addressMapUrl: Optional[str] = None
@@ -77,6 +77,6 @@ class packageOrderModel(BaseModel):
             
             # Allow small floating point differences (0.01)
             if abs(totalPrice - expected_total) > 0.01:
-                raise ValueError(f"total orice({totalPrice}) doesn't match subTotal - discount + shipping ({expected_total})")
+                raise ValueError(f"total price({totalPrice}) doesn't match subTotal - discount + shipping ({expected_total})")
         return totalPrice   
     

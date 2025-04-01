@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from enum import Enum
 
@@ -26,17 +26,17 @@ class UserLoginModel(BaseModel):
 
 class UpdateUsernameModel(BaseModel):
     username: str
-    lastUpdate: datetime = Field(default_factory=datetime.now)
+    lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class updatePhoneNumberModel(BaseModel):
     phoneNumber: str
-    lastUpdate: datetime = Field(default_factory=datetime.now)
+    lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class UpdatePasswordModel(BaseModel):
     currentPassword: str
     newPassword: str
     newPasswordConfirmation: str
-    lastUpdate: datetime = Field(default_factory=datetime.now)
+    lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class UserModel(BaseModel):
@@ -50,9 +50,9 @@ class UserModel(BaseModel):
     profilePictureUrl: Optional[str] = None
     
     # `default_factory` to generate the value dynamically
-    registrationDate: datetime = Field(default_factory=datetime.now)
+    registrationDate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     emailVerified: bool = True
-    lastUpdate: datetime = Field(default_factory=datetime.now)
+    lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     class Config:
         from_attributes = True

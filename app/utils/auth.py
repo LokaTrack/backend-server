@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.utils.security import verifyAccessToken
-from datetime import datetime
+from datetime import datetime, timezone
 
 security = HTTPBearer()
 
@@ -19,6 +19,6 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail={
                 "status": "fail",
                 "message": f"Gagal mengautentikasi: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )

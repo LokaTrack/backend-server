@@ -2,7 +2,6 @@ from app.config.firestore import db
 from app.models.userModel import UserModel
 from app.utils.security import getPasswordHash, verifyPassword, createAccessToken
 from fastapi import HTTPException
-from datetime import datetime
 from firebase_admin import auth
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -40,7 +39,7 @@ async def getDashboard (currentUser):
                     "statistics": statistics,
                     "recentOrder": []
                 },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }    
         recentOrder = [deliveryDoc.to_dict() for deliveryDoc in deliveryDocs]
         totalPackage = len(recentOrder)
@@ -91,7 +90,7 @@ async def getDashboard (currentUser):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -113,7 +112,7 @@ async def getHistory (currentUser):
                 "status": "success",
                 "message": f"Tidak ada data pengiriman untuk user '{currentUser['username']}'.",
                 "data": { "statistics": statistics, "history": [] },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         
         # for history in historyDocs :
@@ -161,6 +160,6 @@ async def getHistory (currentUser):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )

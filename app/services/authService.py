@@ -26,7 +26,7 @@ async def registerUser(userDataInput):
                 detail={
                     "status": "fail",
                     "message": "Email ini sudah digunakan",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         # Check password length
@@ -36,7 +36,7 @@ async def registerUser(userDataInput):
                 detail={
                     "status": "fail",
                     "message": "Password harus memiliki minimal 8 karakter",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         # Check if password and password confirmation match
@@ -46,7 +46,7 @@ async def registerUser(userDataInput):
                 detail={
                     "status": "fail",
                     "message": "Password dan password konfirmasi tidak sama",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -57,7 +57,7 @@ async def registerUser(userDataInput):
             email=userDataInput.email,
             username=userDataInput.username,
             hashedPassword=getPasswordHash(userDataInput.password),
-            # registrationDate=datetime.now(),
+            # registrationDate=datetime.now(timezone.utc),
             # fullName=userDataInput.fullName if hasattr(userDataInput, "fullName") else None
         )
 
@@ -86,7 +86,7 @@ async def registerUser(userDataInput):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan pada server: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 
@@ -109,7 +109,7 @@ async def loginUser(userDataInput):
                 detail={
                     "status": "fail",
                     "message": "Email atau password salah",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -132,7 +132,7 @@ async def loginUser(userDataInput):
                 detail={
                     "status": "fail",
                     "message": "Email atau password salah",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -160,7 +160,7 @@ async def loginUser(userDataInput):
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan pada server: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
     
@@ -221,7 +221,7 @@ async def requestResetPassword (emailUser) :
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan pada server: {str(e)}",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
     
@@ -243,7 +243,7 @@ async def resetPassword (userDataInput) :
                 detail={
                     "status": "fail",
                     "message": "Email tidak terdaftar",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         
@@ -258,7 +258,7 @@ async def resetPassword (userDataInput) :
                 detail={
                     "status": "fail",
                     "message": "OTP tidak ditemukan",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -268,7 +268,7 @@ async def resetPassword (userDataInput) :
                 detail={
                     "status": "fail",
                     "message": "OTP tidak valid",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -279,7 +279,7 @@ async def resetPassword (userDataInput) :
                 detail={
                     "status": "fail",
                     "message": "OTP sudah kadaluarsa",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         # Check password length
@@ -289,7 +289,7 @@ async def resetPassword (userDataInput) :
                 detail={
                     "status": "fail",
                     "message": "Password harus memiliki minimal 8 karakter",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         # Check if password and password confirmation match
@@ -299,7 +299,7 @@ async def resetPassword (userDataInput) :
                 detail={
                     "status": "fail",
                     "message": "Password baru dan password konfirmasi tidak sama",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
         # Update password
@@ -309,7 +309,7 @@ async def resetPassword (userDataInput) :
             # Remove OTP and timestamp after successful reset
             "otp": None,
             "otpTimestamp": None,
-            "lastUpdate": datetime.now()
+            "lastUpdate": datetime.now(timezone.utc)
         })
 
         return {
@@ -325,5 +325,5 @@ async def resetPassword (userDataInput) :
             detail={
                 "status": "fail",
                 "message": f"Terjadi kesalahan pada server: {str(e)}",
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc)().isoformat(),
             })
