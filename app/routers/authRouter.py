@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from app.models.userModel import UserCreateModel, UserLoginModel
-from app.services.authService import registerUser, loginUser
+from app.models.authModel import ResetPasswordRequestModel, ResetPasswordModel
+from app.services.authService import registerUser, loginUser, requestResetPassword, resetPassword
 
 router = APIRouter(prefix="/api/v1", tags=["Authentication"])
 
@@ -22,6 +23,30 @@ async def login(userDataLogin: UserLoginModel):
     """Login an existing user and return a token"""
     try:
         result = await loginUser(userDataLogin)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+        )
+    
+@router.post("/request-reset-password")
+async def RequestPasswordResetRoute(resetRequest: ResetPasswordRequestModel):
+    """Request password reset and send OTP via email"""
+    try:
+        result = await requestResetPassword(resetRequest.email)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+        )
+    
+@router.post("/reset-password")
+async def RequestPasswordResetRoute(resetPasswordData: ResetPasswordModel):
+    """Request password reset and send OTP via email"""
+    try:
+        result = await resetPassword(resetPasswordData)
         return result
     except HTTPException as e:
         return JSONResponse(
