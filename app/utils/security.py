@@ -41,7 +41,7 @@ def createAccessToken(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         # data from .env always in string format
         expired_days = int(os.getenv("ACCESS_TOKEN_EXPIRED_DAYS"), 30)  # Default to 30 days if not set
-        expire = datetime.utcnow(timezone.utc) + timedelta(days=expired_days)
+        expire = datetime.utcnow() + timedelta(days=expired_days)
         
     dataToEncode.update({"exp": expire})
     encoded_jwt = jwt.encode(dataToEncode, os.getenv("SECRET_KEY"), os.getenv("ALGORITHM"))
