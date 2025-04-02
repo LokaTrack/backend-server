@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api/v1", tags=["Delivery"])
 
 
 @router.post("/delivery/start", status_code=201)
-async def startDeliveryRouter(deliveryDataInput: packageDeliveryModel, currentUser: dict = Depends(get_current_user)):
+async def start_delivery(deliveryDataInput: packageDeliveryModel, currentUser: dict = Depends(get_current_user)):
     """Add a New Package to Delivery Collection"""
     try:
         result = await startDeliveryPackage(deliveryDataInput, currentUser)
@@ -22,7 +22,7 @@ async def startDeliveryRouter(deliveryDataInput: packageDeliveryModel, currentUs
     
 
 @router.put("/delivery", status_code=201)
-async def updateDeliveryRouter(deliveryDataInput:updateDeliveryStatusModel, currentUser: dict = Depends(get_current_user)):
+async def update_delivery(deliveryDataInput:updateDeliveryStatusModel, currentUser: dict = Depends(get_current_user)):
     """Update Delivery Status"""
     try:
         result = await updateDeliveryStatus(deliveryDataInput, currentUser)
@@ -34,7 +34,7 @@ async def updateDeliveryRouter(deliveryDataInput:updateDeliveryStatusModel, curr
        )
     
 @router.get("/delivery/{orderNo}", status_code=200)
-async def getPackageRouter(
+async def get_package(
     orderNo: str,
     currentUser: dict = Depends(get_current_user)
     ):
@@ -49,7 +49,7 @@ async def getPackageRouter(
        )
 
 @router.get("/delivery/all/delivery", status_code=200)
-async def getAllPackageRouter ():
+async def get_all_package():
     """Get All Package Delivery"""
     try:
         result = await getAllPackageDelivery()

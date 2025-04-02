@@ -31,7 +31,7 @@ async def login(userDataLogin: UserLoginModel):
         )
     
 @router.post("/request-reset-password")
-async def RequestPasswordResetRoute(resetRequest: ResetPasswordRequestModel):
+async def request_reset_password(resetRequest: ResetPasswordRequestModel):
     """Request password reset and send OTP via email"""
     try:
         result = await requestResetPassword(resetRequest.email)
@@ -43,7 +43,7 @@ async def RequestPasswordResetRoute(resetRequest: ResetPasswordRequestModel):
         )
     
 @router.post("/reset-password")
-async def RequestPasswordResetRoute(resetPasswordData: ResetPasswordModel):
+async def reset_password(resetPasswordData: ResetPasswordModel):
     """Request password reset and send OTP via email"""
     try:
         result = await resetPassword(resetPasswordData)

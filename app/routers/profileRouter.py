@@ -7,7 +7,7 @@ from app.services.profileService import updatePasswordService, updatePhoneNumber
 router = APIRouter(prefix="/api/v1", tags=["Profile"])
 
 @router.get("/profile")
-async def getUser(currentUser: dict = Depends(get_current_user)):
+async def get_user_profile(currentUser: dict = Depends(get_current_user)):
     """Get user data"""
     try:    
         result = await getUserProfile(currentUser)
@@ -19,7 +19,7 @@ async def getUser(currentUser: dict = Depends(get_current_user)):
         )
 
 @router.put("/profile/username")
-async def updateUsername(usernameDataInput: UpdateUsernameModel, currentUser: dict = Depends(get_current_user)):
+async def update_username(usernameDataInput: UpdateUsernameModel, currentUser: dict = Depends(get_current_user)):
     """Update username"""
     try: 
         result = await updateUsernameService (usernameDataInput, currentUser)
@@ -31,7 +31,7 @@ async def updateUsername(usernameDataInput: UpdateUsernameModel, currentUser: di
         )
     
 @router.put("/profile/password")
-async def updatePassword(passwordDataInput: UpdatePasswordModel, currentUser: dict = Depends(get_current_user)):
+async def update_password(passwordDataInput: UpdatePasswordModel, currentUser: dict = Depends(get_current_user)):
     """Update password"""
     try:
         result = await updatePasswordService(passwordDataInput, currentUser)
@@ -43,7 +43,7 @@ async def updatePassword(passwordDataInput: UpdatePasswordModel, currentUser: di
         )
     
 @router.put("/profile/phone-number")
-async def updatePhoneNumber(phoneDataInput: updatePhoneNumberModel, currentUser: dict = Depends(get_current_user)):
+async def update_phone_number(phoneDataInput: updatePhoneNumberModel, currentUser: dict = Depends(get_current_user)):
     """Update phone number"""
     try:
         result = await updatePhoneNumberService(phoneDataInput, currentUser)
@@ -56,7 +56,7 @@ async def updatePhoneNumber(phoneDataInput: updatePhoneNumberModel, currentUser:
     
 
 @router.put("/profile/picture")
-async def updateProfilePicture(
+async def update_profile_picture(
     profilePicture : UploadFile = File (...), 
     currentUser: dict = Depends(get_current_user)):
     """Update profile picture"""

@@ -7,7 +7,7 @@ from app.utils.auth import get_current_user
 router = APIRouter(prefix="/api/v1", tags=["Package"])
 
 @router.post("/packages", status_code=201)
-async def addPackageRouter(
+async def add_package(
     packageDataInput: packageOrderModel,  
     curentUser: dict = Depends(get_current_user)
     ):
@@ -23,7 +23,7 @@ async def addPackageRouter(
 
     
 @router.get("/packages/{orderNo}", status_code=200)
-async def getPackageRouter(
+async def get_package(
     orderNo: str = Path(..., description="Order Number of package, must in double url encoded format", example="OB%252F01-2025%252F19129"), 
     curentUser: dict = Depends(get_current_user)):
     """Get a Package"""
@@ -37,7 +37,7 @@ async def getPackageRouter(
         )
 
 @router.get("/packages", status_code=200)
-async def getAllPackageRouter():
+async def get_all_package():
     """Get All Packages"""
     try:
         result = await getAllPackages()

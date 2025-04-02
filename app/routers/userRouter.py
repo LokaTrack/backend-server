@@ -7,7 +7,7 @@ from app.services.userService import getDashboard, getHistory
 router = APIRouter(prefix="/api/v1", tags=["User Application"])
 
 @router.get("/dashboard")
-async def getDashboardData(currentUser: dict = Depends(get_current_user)):
+async def get_dashboard_data(currentUser: dict = Depends(get_current_user)):
     """Get user data"""
     try:    
         print("try to get dashboard")
@@ -20,7 +20,7 @@ async def getDashboardData(currentUser: dict = Depends(get_current_user)):
         )
     
 @router.get("/history")
-async def getHistoryData(currentUser: dict = Depends(get_current_user)):
+async def get_history_data(currentUser: dict = Depends(get_current_user)):
     """Get user data"""
     try:    
         print("try to get dashboard")
