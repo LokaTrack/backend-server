@@ -8,7 +8,7 @@ from app.utils.auth import get_current_user
 router = APIRouter(prefix="/api/v1", tags=["Delivery"])
 
 
-@router.post("/delivery/start", status_code=201)
+@router.post("/delivery", status_code=201)
 async def start_delivery(deliveryDataInput: packageDeliveryModel, currentUser: dict = Depends(get_current_user)):
     """Add a New Package to Delivery Collection"""
     try:
@@ -20,9 +20,8 @@ async def start_delivery(deliveryDataInput: packageDeliveryModel, currentUser: d
             content=e.detail
        )
     
-
 @router.put("/delivery", status_code=201)
-async def update_delivery(deliveryDataInput:updateDeliveryStatusModel, currentUser: dict = Depends(get_current_user)):
+async def update_delivery_status(deliveryDataInput:updateDeliveryStatusModel, currentUser: dict = Depends(get_current_user)):
     """Update Delivery Status"""
     try:
         result = await updateDeliveryStatus(deliveryDataInput, currentUser)
@@ -34,7 +33,7 @@ async def update_delivery(deliveryDataInput:updateDeliveryStatusModel, currentUs
        )
     
 @router.get("/delivery/{orderNo}", status_code=200)
-async def get_package(
+async def get_delivery_detail(
     orderNo: str,
     currentUser: dict = Depends(get_current_user)
     ):
