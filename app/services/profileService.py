@@ -3,25 +3,67 @@ from app.utils.security import getPasswordHash, verifyPassword
 from app.utils.storeImage import uploadImageToStorage
 from fastapi import HTTPException
 from datetime import datetime, timezone
+from google.cloud.firestore import FieldFilter
 
 async def getUserProfile(currentUser):
     """Get user profile"""
-    userCollection = db.collection("userCollection")
-    userDoc = userCollection.document(currentUser["userId"]).get()
-    
-    if userDoc.exists:
+    try : 
+        userCollection = db.collection("userCollection")
+        userDoc = userCollection.document(currentUser["userId"]).get()
+
+        if not userDoc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": "User tidak ditemukan",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
         userData = userDoc.to_dict()
         userData.pop("hashedPassword", None) # Remove hashed password from response
+
+        # get user delivery statistic
+        historyDeliveryDoc = (
+            db.collection("packageDeliveryCollection")
+            .where(filter=FieldFilter("driverId", "==", currentUser["userId"]))
+            .where(filter=FieldFilter("deliveryStatus", "in", ["Check-out", "Return"]))
+            .get()
+        )
+
+        # statistic 
+        deliveredPackages = 0
+        returnedPackages = 0
+        percentage = 0
+        totalDeliveries = 0
+
+        for delivery in historyDeliveryDoc:
+            deliveryData = delivery.to_dict()
+            totalDeliveries += 1
+            if deliveryData["deliveryStatus"] == "Check-out":
+                deliveredPackages += 1
+            elif deliveryData["deliveryStatus"] == "Return":
+                returnedPackages += 1
+        totalDeliveries =  deliveredPackages + returnedPackages
+        percentage = (deliveredPackages / totalDeliveries) * 100 if totalDeliveries > 0 else 0
+
+        userData.update({
+            "deliveredPackages" : deliveredPackages,
+            "totalDeliveries" : totalDeliveries,
+            "percentage" : percentage
+        })    
         return {
             "status": "success",
             "data": userData
         }
-    else:
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=404,
+            status_code=500,
             detail={
                 "status": "fail",
-                "message": "User tidak ditemukan",
+                "message": f"Terjadi kesalahan: {str(e)}",
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
