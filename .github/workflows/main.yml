@@ -43,7 +43,6 @@ jobs:
             exit 1
           fi
         EOF
-        /home/cornelius/.script
         echo "deploy_success=$DEPLOY_SUCCESS" >> $GITHUB_OUTPUT
 
     # send success notification
