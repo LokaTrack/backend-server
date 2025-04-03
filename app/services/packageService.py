@@ -46,10 +46,14 @@ async def addPackage(packageDataInput, currentUser):
             encodedAddress = urllib.parse.quote(orderData["address"])
             orderData["addressMapUrl"] = f"https://www.google.com/maps/search/?api=1&query={encodedAddress}"
 
+        # add list items name to orderData 
+        itemsList = [item["name"] for item in orderData["items"]]
+        orderData.update ({"itemsList": itemsList})
+
         # Create a copy without items for the main document
         orderData_without_items = orderData.copy()
         orderData_without_items.pop("items", None)        
-        
+
         db.collection("packageOrderCollection").document(orderNoFilered).set(orderData_without_items)
         
         # add each item to the items subcollection

@@ -40,7 +40,8 @@ class packageOrderModel(BaseModel):
     discount: float = 0
     shipping: float = 0
     totalPrice: float
-
+    orderNotes: Optional[str] = ""
+    
     @field_validator('subTotal')
     @classmethod
     def validate_subtotal(cls, subtotal, values):
