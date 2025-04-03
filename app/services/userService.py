@@ -1,5 +1,6 @@
 from app.config.firestore import db
 from app.utils.time import convert_utc_to_wib, get_wib_day_range
+from google.cloud.firestore import FieldFilter
 from fastapi import HTTPException
 from datetime import datetime, timezone
 import logging
@@ -11,20 +12,21 @@ async def getDashboard (currentUser):
         today_start, today_end = get_wib_day_range()
         # today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         # today_end = today_start + timedelta(days=1) - timedelta(seconds=1)
+        
         # statistic 
-        statistics = {
-            "delivery": 0,
-            "checkin": 0,
-            "checkout": 0,
-            "return": 0,
-            "others": 0,
-            "percentage" : 0
-        }
+        onDeliveredPackages = 0
+        checkedInPackages = 0
+        deliveredPackages = 0
+        returnedPackages = 0
+        others = 0
+        totalPackages = 0
+        percentage =  0
+        
 
         deliveryDocs = (
             db.collection("packageDeliveryCollection")
-            .where("driverId", "==", currentUser["userId"])
-            .where("deliveryStartTime", ">=", today_start)
+            .where(filter=FieldFilter("driverId", "==", currentUser["userId"]))
+            .where(filter=FieldFilter("deliveryStartTime", ">=", today_start))
             # .where("deliveryStartTime", "<=", today_end)
             .get()
         )
@@ -34,14 +36,18 @@ async def getDashboard (currentUser):
                 "status": "success",
                 "message": f"Tidak ada data pengiriman hari ini untuk user '{currentUser['username']}'.",
                 "data": {
-                    "statistics": statistics,
+                    "onDeliveredPackages": 0,
+                    "checkedInPackages": 0,
+                    "deliveredPackages": 0,
+                    "returnedPackages": 0,
+                    "others": 0,
+                    "percentage ": 0,
                     "recentOrder": []
                 },
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }    
         recentOrder = [deliveryDoc.to_dict() for deliveryDoc in deliveryDocs]
-        totalPackage = len(recentOrder)
-        statistics["totalPackage"] = totalPackage
+        totalPackages = len(recentOrder)
 
         # for x in recentOrder :
         #     if x.get("deliveryStatus") == "dikirim":
@@ -55,21 +61,24 @@ async def getDashboard (currentUser):
         #     else :
         #         statistics["others"] += 1
 
-        status_mapping = {
-            "delivery": "delivery", 
-            "checkin": "checkin", 
-            "checkout": "checkout", 
-            "return": "return"
-        }
 
         for x in recentOrder:
-            key = status_mapping.get(x.get("deliveryStatus"), "others")
-            statistics[key] += 1
+            status = x.get("deliveryStatus")
+            if status == "On Delivery":
+                onDeliveredPackages += 1
+            elif status == "Check-in":
+                checkedInPackages += 1
+            elif status == "Check-out":
+                deliveredPackages += 1
+            elif status == "Return":
+                returnedPackages += 1
+            else:
+                others += 1
 
-        if totalPackage > 0:
+        if totalPackages > 0:
             # Consider both selesai and dikembalikan as completed
-            completed = statistics["checkout"] + statistics["return"]
-            statistics["percentage"] = int((completed / totalPackage) * 100)
+            completed = deliveredPackages + returnedPackages
+            percentage = int((completed / totalPackages) * 100)
 
         # convert all timestamps in response to WIB
         for order in recentOrder:
@@ -78,7 +87,12 @@ async def getDashboard (currentUser):
                     order[time_field] = convert_utc_to_wib(order[time_field]).isoformat()
         
         data = {
-                "statistics" : statistics,
+                "onDeliveredPackages": onDeliveredPackages,
+                "checkedInPackages": checkedInPackages,
+                "deliveredPackages": deliveredPackages,
+                "returnedPackages": returnedPackages,
+                "others": others,
+                "percentage": percentage,
                 "recentOrder": recentOrder,
         }
         return {
@@ -101,58 +115,67 @@ async def getDashboard (currentUser):
 async def getHistory (currentUser):
     """Get User History Data"""
     try:
-        historyDelivery = []
-        statistics = {
-            "success": 0,
-            "return": 0,
-            "totalDelivery": 0,
-        }
+        # statistic
+        deliveredPackages = 0
+        returnedPackages = 0
+        totalDeliveries = 0
+
         historyDocs = (
             db.collection("packageDeliveryCollection")
-            .where("driverId", "==", currentUser["userId"])
+            .where(filter=FieldFilter("driverId", "==", currentUser["userId"]))
+            .where(filter=FieldFilter("deliveryStatus", "in", ["Check-out", "Return"]))
             .get()
         )
         if not historyDocs:
             return {
                 "status": "success",
                 "message": f"Tidak ada data pengiriman untuk user '{currentUser['username']}'.",
-                "data": { "statistics": statistics, "history": [] },
+                "data": { 
+                    deliveredPackages : 0,
+                    returnedPackages : 0,
+                    "totalDeliveries": 0,   
+                    "history": [] 
+                    },
                 "timestamp": convert_utc_to_wib(datetime.now(timezone.utc).isoformat())
             }
         
         # for history in historyDocs :
         #     historyData = history.to_dict()
         #     print ("/n ", historyData)
-        #     if historyData.get("deliveryStatus") == "checkout" :
-        #         print ("\n append to checkout : ", historyData)
+        #     if historyData.get("deliveryStatus") == "Check-out" :
+        #         print ("\n append to Check-out : ", historyData)
         #         historyDelivery.append(historyData)
-        #         statistics["checkout"] += 1
-        #     elif historyData.get("deliveryStatus") == "return" :
-        #         print ("\n  append to return : ", historyData)
+        #         statistics["Check-out"] += 1
+        #     elif historyData.get("deliveryStatus") == "Return" :
+        #         print ("\n  append to Return : ", historyData)
         #         historyDelivery.append(historyData)
-        #         statistics["return"] += 1
-        status_mapping = {
-            "checkout": "success",
-            "return": "return"
-        }
+        #         statistics["Return"] += 1
 
+        historyDeliveries = []
         for history in historyDocs:
             historyData = history.to_dict()
+            historyDeliveries.append(historyData)
             status = historyData.get("deliveryStatus")
-            if status in status_mapping:
-                historyDelivery.append(historyData)
-                statistics[status_mapping[status]] += 1
-                # convert all timestamps in response to WIB
-                timestamp_fields = ["checkInTime", "checkOutTime", "deliveryStartTime", "lastUpdateTime", "returnTime", "timestamp"]
-                for field in timestamp_fields:
-                    if field in historyData and historyData[field]:
-                        historyData[field] = convert_utc_to_wib(historyData[field]).isoformat()
+            
+            # Add statistics 
+            if status == "Check-out":
+                deliveredPackages += 1
+            elif status == "Return":
+                returnedPackages += 1
+
+            # convert all timestamps in response to WIB
+            timestamp_fields = ["checkInTime", "checkOutTime", "deliveryStartTime", "lastUpdateTime", "returnTime", "timestamp"]
+            for field in timestamp_fields:
+                if field in historyData and historyData[field]:
+                    historyData[field] = convert_utc_to_wib(historyData[field]).isoformat()
         
-        statistics["totalDelivery"] = len (historyDelivery)
+        totalDeliveries = len (historyDeliveries)
 
         data = {
-            "statistics" : statistics,
-            "history" : historyDelivery,
+            "deliveredPackages": deliveredPackages,
+            "returnedPackages": returnedPackages,
+            "totalDeliveries": totalDeliveries,
+            "history" : historyDeliveries,
         }
         return {
             "status": "success",
