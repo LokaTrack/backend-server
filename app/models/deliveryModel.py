@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 from enum import Enum
 
 class deliveryStatusEnum(str, Enum):
-    delivery = "delivery"
-    checkin = "checkin"
-    checkout = "checkout"
-    returned = "return"  
+    delivery = "On Delivery"
+    checkin = "Check-in"
+    checkout = "Check-out"
+    returned = "Return"  
 
 # package delivery model
 class packageDeliveryModel(BaseModel):
@@ -15,6 +15,7 @@ class packageDeliveryModel(BaseModel):
     driverId: Optional [str] = None
     customer: Optional [str] = None
     address: Optional [str] = None
+    itemsList: Optional [list] = None
     totalWeight: Optional [float] = 0
     totalPrice: Optional [float] = 0
     deliveryStatus: deliveryStatusEnum = deliveryStatusEnum.delivery

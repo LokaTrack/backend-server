@@ -34,6 +34,7 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
             .document(orderNoFiltered)
             .get()
         )
+        # <google.cloud.firestore_v1.base_document.DocumentSnapshot object at 0x000001FC09D54210>
         if not packageOrderDoc.exists: 
             raise HTTPException(
                 status_code=404,
@@ -72,13 +73,15 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
             "driverId": currentUser["userId"],
             "customer": packageOrderDoc["customer"],
             "address": packageOrderDoc["address"],
+            "itemsList": packageOrderDoc["itemsList"],
             "totalWeight": packageOrderDoc["totalWeight"],
-            "totalPrice": packageOrderDoc["totalPrice"]
+            "totalPrice": packageOrderDoc["totalPrice"],
+            "orderNotes": packageOrderDoc["orderNotes"],
         })
 
         db.collection("packageDeliveryCollection").document(orderNoFiltered).set(newPackageData)
         
-        # update to wib
+        # update to wib in response 
         newPackageData.update({
             "deliveryStartTime": convert_utc_to_wib(newPackageData["deliveryStartTime"]),
             "lastUpdateTime": convert_utc_to_wib(newPackageData["lastUpdateTime"]),
@@ -102,7 +105,6 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
             }
         )
     
-
 async def updateDeliveryStatus (deliveryDataInput, currentUser):
     try:
         # Check if user is admin or driver
@@ -149,12 +151,12 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
-        # status -> "delivery", "checkin", "checkout", "return"
+        # status -> "On Delivery", "Check-in", "Check-out", "Return"
         valid_status_transitions = {
-            "delivery": "checkin",
-            "checkin": "checkout",
-            "checkout": "return",
-            "return": "checkout"
+            "On Delivery": "Check-in",
+            "Check-in": "Check-out",
+            "Check-out": "Return",
+            "Return": "Check-out"
         }
 
         current_status = packageDeliveryData.get("deliveryStatus")
@@ -171,9 +173,9 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
             )
 
         time_field_mapping = {
-            "checkin": "checkInTime",
-            "checkout": "checkOutTime",
-            "return": "returnTime"
+            "Check-in": "checkInTime",
+            "Check-out": "checkOutTime",
+            "Return": "returnTime"
         }
         time_field_to_update = time_field_mapping.get(next_status)
 
@@ -195,12 +197,12 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
                
         db.collection("packageDeliveryCollection").document(orderNoFiltered).update(packageDeliveryData)
 
-        # update to wib
+        # update response to wib
         time_fields = ["deliveryStartTime", "checkInTime", "checkOutTime", "returnTime", "lastUpdateTime"]
         for field in time_fields:
             if field in packageDeliveryData and packageDeliveryData[field]:
                 packageDeliveryData[field] = convert_utc_to_wib(packageDeliveryData[field])
-
+        
         return {
             "status": "success",
             "message": f"Status paket '{deliveryDataInput.orderNo}' berhasil diupdate",
@@ -242,12 +244,16 @@ async def getPackageDeliveryById(orderNo):
         
         packageDeliveryData = packageDeliveryDoc.to_dict()
         
-        # Convert time fields to WIB
+        # Convert time fields in response to WIB
         time_fields = ["deliveryStartTime", "checkInTime", "checkOutTime", "returnTime", "lastUpdateTime"]
         for field in time_fields:
             if field in packageDeliveryData and packageDeliveryData[field]:
                 packageDeliveryData[field] = convert_utc_to_wib(packageDeliveryData[field])
           
+        # update response items list to string
+        list_item = ', '.join(packageDeliveryData["itemsList"])
+        packageDeliveryData["itemsList"] = list_item
+        
         return {
             "status": "success",
             "message": "Mengambil data pengiriman berhasil",
