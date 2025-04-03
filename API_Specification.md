@@ -272,44 +272,59 @@ if fail - Password too short (400 Bad Request)
   - `discount` as `float` (default = 0)
   - `shipping` as `float` (default = 0)
   - `totalPrice` as `float` (should equal subTotal - discount + shipping)
+  - `orderNotes` as `string` (optional)
 
 ### Success
 Success (Status code 201):
 ```json
 {
-  "status": "success",
-  "message": "Order berhasil ditambahkan",
-  "data": {
-    "orderNo": "OB/03-2025/129",
-    "orderDate": "2025-03-25T21:30:00.000000",
-    "customer": "John Doe",
-    "address": "Jl. Jend. Sudirman No. 1, Jakarta",
-    "addressMapUrl": "https://www.google.com/maps/search/?api=1&query=Jl.%20Jend.%20Sudirman%20No.%201%2C%20Jakarta",
-    "phone": "081234567890",
-    "items": [
-      {
-        "name": "Product A",
-        "quantity": 2,
-        "unitPrice": 50000,
-        "total": 100000,
-        "notes": "",
-        "weight": 0.5
-      },
-      {
-        "name": "Product B",
-        "quantity": 1,
-        "unitPrice": 75000,
-        "total": 75000,
-        "notes": "Fragile",
-        "weight": 0.2
-      }
-    ],
-    "totalWeight": 1.2,
-    "subTotal": 175000,
-    "discount": 10000,
-    "shipping": 15000,
-    "totalPrice": 180000
-  }
+    "status": "success",
+    "message": "Order berhasil ditambahkan",
+    "data": {
+        "orderNo": "OB/01-2025/24",
+        "orderDate": "2025-04-03T18:13:16.964637+07:00",
+        "customer": "John Doe",
+        "address": "123 Main Street, Central Jakarta",
+        "addressMapUrl": "https://www.google.com/maps/search/?api=1&query=123%20Main%20Street%2C%20Central%20Jakarta",
+        "phone": "081234567890",
+        "items": [
+            {
+                "name": "Sayur Bayam",
+                "quantity": 4,
+                "unitPrice": 14000.0,
+                "total": 56000.0,
+                "notes": "",
+                "weight": 0.5
+            },
+            {
+                "name": "Brokoli Gundul",
+                "quantity": 5,
+                "unitPrice": 30000.0,
+                "total": 150000.0,
+                "notes": "",
+                "weight": 1.0
+            },
+            {
+                "name": "Cabai Merah",
+                "quantity": 4,
+                "unitPrice": 60000.0,
+                "total": 240000.0,
+                "notes": "",
+                "weight": 1.0
+            }
+        ],
+        "totalWeight": 11.0,
+        "subTotal": 446000.0,
+        "discount": 0.0,
+        "shipping": 0.0,
+        "totalPrice": 446000.0,
+        "orderNotes": "Pastikan cabai nya segar",
+        "itemsList": [
+            "Sayur Bayar",
+            "Brokoli Gundul",
+            "Cabai Merah"
+        ]
+    }
 }
 ```
 
@@ -362,39 +377,53 @@ If fail - internal error (Status code 500):
 Success (Status code 200):
 ```json
 {
-  "status": "success",
-  "message": "Berhasil mendapatkan detail paket",
-  "data": {
-    "orderNo": "OB/03-2025/129",
-    "orderDate": "2025-03-25T21:30:00.000000",
-    "customer": "John Doe",
-    "address": "Jl. Jend. Sudirman No. 1, Jakarta",
-    "addressMapUrl": "https://www.google.com/maps/search/?api=1&query=Jl.%20Jend.%20Sudirman%20No.%201%2C%20Jakarta",
-    "phone": "081234567890",
-    "items": [
-      {
-        "name": "Product A",
-        "quantity": 2,
-        "unitPrice": 50000,
-        "total": 100000,
-        "notes": "",
-        "weight": 0.5
-      },
-      {
-        "name": "Product B",
-        "quantity": 1,
-        "unitPrice": 75000,
-        "total": 75000,
-        "notes": "Fragile",
-        "weight": 0.2
-      }
-    ],
-    "totalWeight": 1.2,
-    "subTotal": 175000,
-    "discount": 10000,
-    "shipping": 15000,
-    "totalPrice": 180000
-  }
+    "status": "success",
+    "message": "Berhasil mendapatkan detail paket",
+    "data": {
+        "orderNo": "OB/01-2025/24",
+        "orderDate": "2025-04-03T18:13:16.964637+07:00",
+        "itemsList": [
+            "Sayur Bayar",
+            "Brokoli Gundul",
+            "Cabai Meram"
+        ],
+        "phone": "081234567890",
+        "discount": 0.0,
+        "totalWeight": 11.0,
+        "customer": "John Doe",
+        "addressMapUrl": "https://www.google.com/maps/search/?api=1&query=123%20Main%20Street%2C%20Central%20Jakarta",
+        "subTotal": 446000.0,
+        "address": "123 Main Street, Central Jakarta",
+        "orderNotes": "Pastikan cabai nya segar",
+        "totalPrice": 446000.0,
+        "shipping": 0.0,
+        "items": [
+            {
+                "weight": 0.5,
+                "notes": "",
+                "unitPrice": 14000.0,
+                "total": 56000.0,
+                "quantity": 4,
+                "name": "Sayur Bayam"
+            },
+            {
+                "weight": 1.0,
+                "notes": "",
+                "unitPrice": 30000.0,
+                "total": 150000.0,
+                "quantity": 5,
+                "name": "Brokoli Gundul"
+            },
+            {
+                "weight": 1.0,
+                "notes": "",
+                "unitPrice": 60000.0,
+                "total": 240000.0,
+                "quantity": 4,
+                "name": "Cabai Merah"
+            }
+        ]
+    }
 }
 ```
 
@@ -422,7 +451,7 @@ If fail - internal error (Status code 500):
 ## 1. Start Delivery Package
 Start delivery process for a package
 - URL
-  - `/api/v1/delivery/start`
+  - `/api/v1/delivery`
 
 - Method
   - `POST`
@@ -436,22 +465,28 @@ Start delivery process for a package
 Success (Status code 201):
 ```json
 {
-  "status": "success",
-  "message": "Paket berhasil ditambahkan ke delivery",
-  "data": {
-    "orderNo": "ORD-12345",
-    "driverId": "62f8d408-d483-41f2-8ddc-ea1c11900d41",
-    "customer": "John Doe",
-    "address": "123 Main Street, Jakarta",
-    "totalWeight": 5,
-    "totalPrice": 195000,
-    "deliveryStatus": "dikirim",
-    "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-    "deliveryStartTime": "2025-03-27T11:56:18.190281",
-    "checkInTime": null,
-    "checkOutTime": null,
-    "lastUpdateTime": "2025-03-27T11:56:18.190281"
-  }
+    "status": "success",
+    "message": "Paket berhasil ditambahkan ke delivery",
+    "data": {
+        "orderNo": "OB/01-2025/24",
+        "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
+        "customer": "John Doe",
+        "address": "123 Main Street, Central Jakarta",
+        "itemsList": [
+            "Sayur Bayam",
+            "Brokoli Gundul",
+            "Cabai Merah"
+        ],
+        "totalWeight": 11.0,
+        "totalPrice": 446000.0,
+        "deliveryStatus": "On Delivery",
+        "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
+        "deliveryStartTime": "2025-04-03T18:14:32.592510+07:00",
+        "checkInTime": null,
+        "checkOutTime": null,
+        "lastUpdateTime": "2025-04-03T18:14:32.592510+07:00",
+        "orderNotes": "Pastikan cabai nya segar"
+    }
 }
 ```
 
@@ -484,7 +519,7 @@ If fail - internal error (Status code 500):
 
 ## 2. Update Delivery Status
 Updates the delivery status of a package. The status must follow the valid transition rules:
-> delivery → checkin → checkout → return
+> On Deliveery → Check-in → Check-out → Return
 
 
 - URL
@@ -499,27 +534,32 @@ Updates the delivery status of a package. The status must follow the valid trans
 - Request Body:
   - `orderNo` as `string`, 
   - `deliveryStatus` as string
-    > Possible values: "delivery", "checkin", "checkout", "return"
+    > Possible values: "On Delivery", "Check-in", "Check-out", "Return"
 
 ### Success
 ```json
 {
     "status": "success",
-    "message": "Status paket 'OB/01-2025/104' berhasil diupdate",
+    "message": "Status paket 'OB/01-2025/24' berhasil diupdate",
     "data": {
-        "orderNo": "OB/01-2025/104",
-        "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
-        "deliveryStatus": "checkout",
+        "orderNo": "OB/01-2025/24",
+        "deliveryStatus": "Check-in",
+        "lastUpdateTime": "2025-04-03T18:19:36.097230+07:00",
+        "totalWeight": 11.0,
+        "checkOutTime": null,
+        "totalPrice": 446000.0,
+        "deliveryStartTime": "2025-04-03T18:14:32.592510+07:00",
+        "orderNotes": "Pastikan cabai nya segar",
+        "itemsList": [
+            "Sayur Bayar",
+            "Brokoli Gundul",
+            "Cabai Merah"
+        ],
+        "checkInTime": "2025-04-03T18:19:36.097230+07:00",
         "customer": "John Doe",
         "address": "123 Main Street, Central Jakarta",
-        "totalWeight": 6.7,
-        "totalPrice": 576000.0,
         "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-        "deliveryStartTime": "2025-03-30T15:00:54.307042+00:00",
-        "checkInTime": "2025-03-31T03:17:59.852427",
-        "checkOutTime": "2025-03-31T03:18:31.059068",                
-        "returnTime": "2025-03-31T03:18:21.226109",
-        "lastUpdateTime": "2025-03-31T03:18:31.059068"
+        "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302"
     }
 }
 ```
@@ -557,19 +597,20 @@ Updates the delivery status of a package. The status must follow the valid trans
     "status": "success",
     "message": "Mengambil data pengiriman berhasil",
     "data": {
-        "orderNo": "OB/01-2025/104",
-        "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
-        "deliveryStatus": "checkout",
+        "orderNo": "OB/01-2025/24",
+        "deliveryStatus": "On Delivery",
+        "lastUpdateTime": "2025-04-03T18:14:32.592510+07:00",
+        "totalWeight": 11.0,
+        "checkOutTime": null,
+        "totalPrice": 446000.0,
+        "deliveryStartTime": "2025-04-03T18:14:32.592510+07:00",
+        "orderNotes": "Pastikan cabai nya segar",
+        "itemsList": "Sayur Bayam, Brokoli Gundul, Cabai Merah",
+        "checkInTime": null,
         "customer": "John Doe",
         "address": "123 Main Street, Central Jakarta",
-        "totalWeight": 6.7,
-        "totalPrice": 576000.0,
         "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-        "deliveryStartTime": "2025-03-30T15:00:54.307042+00:00",
-        "checkInTime": "2025-03-31T03:17:59.852427",
-        "checkOutTime": "2025-03-31T03:18:31.059068",                
-        "returnTime": "2025-03-31T03:18:21.226109",
-        "lastUpdateTime": "2025-03-31T03:18:31.059068"
+        "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302"
     }
 }
 ```
