@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from app.models.userModel import UserCreateModel, UserLoginModel
 from app.models.authModel import ResetPasswordRequestModel, ResetPasswordModel
-from app.services.authService import registerUser, loginUser, requestResetPassword, resetPassword
+from app.services.authService import registerUser, loginUser, requestResetPassword, resetPassword, verifyEmail
 
-router = APIRouter(prefix="/api/v1", tags=["Authentication"])
+router = APIRouter(tags=["Authentication"])
 
-@router.post("/register", status_code=201)
+@router.post("/api/v1/register", status_code=201)
 async def register(userDataInput: UserCreateModel):
     """Register a new user"""
     try:
@@ -18,7 +18,7 @@ async def register(userDataInput: UserCreateModel):
             content=e.detail
         )
     
-@router.post("/login")
+@router.post("/api/v1/login")
 async def login(userDataLogin: UserLoginModel):
     """Login an existing user and return a token"""
     try:
@@ -30,7 +30,7 @@ async def login(userDataLogin: UserLoginModel):
             content=e.detail
         )
     
-@router.post("/request-reset-password")
+@router.post("/api/v1/request-reset-password")
 async def request_reset_password(resetRequest: ResetPasswordRequestModel):
     """Request password reset and send OTP via email"""
     try:
@@ -42,7 +42,7 @@ async def request_reset_password(resetRequest: ResetPasswordRequestModel):
             content=e.detail
         )
     
-@router.post("/reset-password")
+@router.post("/api/v1/reset-password")
 async def reset_password(resetPasswordData: ResetPasswordModel):
     """Request password reset and send OTP via email"""
     try:
@@ -53,3 +53,8 @@ async def reset_password(resetPasswordData: ResetPasswordModel):
             status_code=e.status_code,
             content=e.detail
         )
+
+@router.get("/verify-email/{token}")
+async def verify_email(token: str):
+    """Verify email using the token"""
+    return await verifyEmail(token)

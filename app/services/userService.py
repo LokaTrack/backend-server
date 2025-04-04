@@ -19,9 +19,8 @@ async def getDashboard (currentUser):
         deliveredPackages = 0
         returnedPackages = 0
         others = 0
-        totalPackages = 0
+        totalDeliveries = 0
         percentage =  0
-        
 
         deliveryDocs = (
             db.collection("packageDeliveryCollection")
@@ -47,7 +46,7 @@ async def getDashboard (currentUser):
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }    
         recentOrder = [deliveryDoc.to_dict() for deliveryDoc in deliveryDocs]
-        totalPackages = len(recentOrder)
+        totalDeliveries = len(recentOrder)
 
         # for x in recentOrder :
         #     if x.get("deliveryStatus") == "dikirim":
@@ -75,10 +74,10 @@ async def getDashboard (currentUser):
             else:
                 others += 1
 
-        if totalPackages > 0:
+        if totalDeliveries > 0:
             # Consider both selesai and dikembalikan as completed
             completed = deliveredPackages + returnedPackages
-            percentage = int((completed / totalPackages) * 100)
+            percentage = int((completed / totalDeliveries) * 100)
 
         # convert all timestamps in response to WIB
         for order in recentOrder:
@@ -91,6 +90,7 @@ async def getDashboard (currentUser):
                 "checkedInPackages": checkedInPackages,
                 "deliveredPackages": deliveredPackages,
                 "returnedPackages": returnedPackages,
+                "totalDeliveries": totalDeliveries,
                 "others": others,
                 "percentage": percentage,
                 "recentOrder": recentOrder,

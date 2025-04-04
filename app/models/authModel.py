@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime, timedelta, timezone
 import random
 import string
+import uuid
 
 class ResetPasswordRequestModel(BaseModel):
     email: EmailStr
@@ -26,4 +27,22 @@ class OtpVerificationModel(BaseModel):
         return OtpVerificationModel(
             otp=otp,
             expiresAt=expires_at
+        )
+    
+class EmailVerificationModel(BaseModel):
+    lastUpdate: datetime
+    emailVerificationToken: str
+    emailVerificationTokenExpiry: datetime
+    
+    @staticmethod
+    def generate(expiry_hours: int = 24):
+        """Generate a new email verification token"""
+        lastUpdate = datetime.now(timezone.utc)
+        emailVerificationToken = ''.join(random.choices(string.ascii_letters + string.digits, k=64))
+        emailVerificationTokenExpiry = datetime.now() + timedelta(hours=expiry_hours)
+        
+        return EmailVerificationModel(
+            lastUpdate=lastUpdate,
+            emailVerificationToken=emailVerificationToken,  
+            emailVerificationTokenExpiry=emailVerificationTokenExpiry 
         )

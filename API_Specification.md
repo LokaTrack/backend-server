@@ -20,8 +20,8 @@ This document provides the specifications for the API endpoints of our applicati
 Success  (Status code 201) :
 ```json
 {
-  "status": "success",
-  "message": "Akun anda berhasil dibuat!"
+    "status": "success",
+    "message": "Akun anda berhasil dibuat! Silahkan cek email untuk aktivasi akun"
 }
 ```
 
@@ -747,55 +747,61 @@ Updates the delivery status of a package. The status must follow the valid trans
     "status": "success",
     "message": "Mengambil data history berhasil",
     "data": {
-        "statistics": {
-            "success": 2,
-            "return": 2,
-            "totalDelivery": 4
-        },
+        "deliveredPackages": 2,
+        "returnedPackages": 1,
+        "totalDeliveries": 3,
         "history": [
             {
-                "orderNo": "OB/01-2025/1",
-                "deliveryStatus": "checkout",
-                "checkInTime": "2025-03-31T01:48:03.003743+00:00",
-                "lastUpdateTime": "2025-03-31T01:48:03.003743+00:00",
-                "totalWeight": 6.7,
+                "orderNo": "OB/01-2025/22",
+                "deliveryStatus": "Check-out",
+                "returnTime": "2025-04-03T18:20:17.255704+07:00",
+                "lastUpdateTime": "2025-04-03T18:20:17.255704+07:00",
+                "totalWeight": 11.0,
+                "checkOutTime": "2025-04-03T18:19:53.239257+07:00",
+                "totalPrice": 446000.0,
+                "deliveryStartTime": "2025-04-03T18:14:32.592510+07:00",
+                "orderNotes": "Pastikan cabai nya segar",
+                "itemsList": ["Sayur Bayam","Brokoli Gundul","Cabai Merah"],
+                "checkInTime": "2025-04-03T18:19:36.097230+07:00",
                 "customer": "John Doe",
                 "address": "123 Main Street, Central Jakarta",
                 "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
-                "totalPrice": 576000,
-                "deliveryStartTime": "2025-03-30T16:48:00.049000+00:00",
-                "checkOutTime": "2025-03-31T01:48:03.003743+00:00"
-            },
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302"
+            }
             {
-                "orderNo": "OB/01-2025/104",
-                "deliveryStatus": "return",
-                "checkInTime": "2025-03-31T03:17:59.852427",
-                "returnTime": "2025-03-31T03:37:24.011971",
-                "lastUpdateTime": "2025-03-31T03:37:24.011971",
-                "totalWeight": 6.7,
+                "orderNo": "OB/01-2025/23",
+                "deliveryStatus": "Check-out",
+                "returnTime": "2025-04-03T18:20:17.255704+07:00",
+                "lastUpdateTime": "2025-04-03T18:20:17.255704+07:00",
+                "totalWeight": 11.0,
+                "checkOutTime": "2025-04-03T18:19:53.239257+07:00",
+                "totalPrice": 446000.0,
+                "deliveryStartTime": "2025-04-03T18:14:32.592510+07:00",
+                "orderNotes": "Pastikan cabai nya segar",
+                "itemsList": ["Sayur Bayam","Brokoli Gundul","Cabai Merah"],
+                "checkInTime": "2025-04-03T18:19:36.097230+07:00",
                 "customer": "John Doe",
                 "address": "123 Main Street, Central Jakarta",
                 "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
-                "totalPrice": 576000,
-                "deliveryStartTime": "2025-03-30T15:00:54.307042+00:00",
-                "checkOutTime": "2025-03-31T03:18:31.059068"
-            },
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302"
+            }
             {
-                "orderNo": "OB/01-2025/111",
-                "deliveryStatus": "checkout",
-                "checkInTime": "2025-03-31T01:48:03.003743+00:00",
-                "lastUpdateTime": "2025-03-31T03:16:42.973812",
-                "totalWeight": 6.7,
+                "orderNo": "OB/01-2025/24",
+                "deliveryStatus": "Return",
+                "returnTime": "2025-04-03T18:20:17.255704+07:00",
+                "lastUpdateTime": "2025-04-03T18:20:17.255704+07:00",
+                "totalWeight": 11.0,
+                "checkOutTime": "2025-04-03T18:19:53.239257+07:00",
+                "totalPrice": 446000.0,
+                "deliveryStartTime": "2025-04-03T18:14:32.592510+07:00",
+                "orderNotes": "Pastikan cabai nya segar",
+                "itemsList": ["Sayur Bayam","Brokoli Gundul","Cabai Merah"],
+                "checkInTime": "2025-04-03T18:19:36.097230+07:00",
                 "customer": "John Doe",
                 "address": "123 Main Street, Central Jakarta",
                 "trackerId": "Ue2KlB6IMPdfoBN4CR2b",
-                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302",
-                "totalPrice": 576000,
-                "deliveryStartTime": "2025-03-30T20:02:22.314527+00:00",
-                "checkOutTime": "2025-03-31T03:16:42.973812"
-            },
+                "driverId": "c2c73f9e-3fff-4e11-afe1-f482bf051302"
+            }
         ]
     }
 }

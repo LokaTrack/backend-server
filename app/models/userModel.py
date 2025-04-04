@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 from enum import Enum
 
@@ -38,7 +38,6 @@ class UpdatePasswordModel(BaseModel):
     newPasswordConfirmation: str
     lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-
 class UserModel(BaseModel):
     # generates a new UUID each time the User object is created.
     userId: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -48,11 +47,11 @@ class UserModel(BaseModel):
     role: UserRole = UserRole.DRIVER
     phoneNumber: Optional[str] = None
     profilePictureUrl: Optional[str] = None
-    
+    isEmailVerified: bool = False
+
     # `default_factory` to generate the value dynamically
     registrationDate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    emailVerified: bool = True
     lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    
+     
     class Config:
         from_attributes = True
