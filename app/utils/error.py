@@ -84,7 +84,7 @@ async def method_not_allowed_exception_handler(request: Request, exc: StarletteH
 async def general_exception_handler(request: Request, exc: Exception):
     """Handle all other exceptions"""
     return ErrorResponse(
-        status="error",
+        status="fail",
         message=str(exc),
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     ).to_response()
