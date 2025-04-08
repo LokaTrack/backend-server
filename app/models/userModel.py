@@ -32,6 +32,10 @@ class updatePhoneNumberModel(BaseModel):
     phoneNumber: str
     lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class UpdateEmailModel(BaseModel):
+    email: str
+    lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class UpdatePasswordModel(BaseModel):
     currentPassword: str
     newPassword: str

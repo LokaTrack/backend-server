@@ -2,6 +2,7 @@ from app.config.firestore import db
 from app.models.userModel import UserModel
 from app.models.authModel import OtpVerificationModel, EmailVerificationModel
 from app.utils.security import getPasswordHash, verifyPassword, createAccessToken
+from app.utils.emailVerification import sendVerificationEmail
 from app.utils.email import sendEmail
 from app.utils.template import renderTemplate
 from app.utils.time import convert_utc_to_wib
@@ -391,40 +392,6 @@ async def resetPassword (userDataInput) :
                 "message": f"Terjadi kesalahan pada server: {str(e)}",
                 "timestamp": datetime.now(timezone.utc)().isoformat(),
             })
-    
-
-async def sendVerificationEmail (email: str, username:str, emailVerificationToken: str) : 
-    """Send Email Verification"""
-    try :
-        # generate verification link
-        verification_url = f"{APP_DOMAIN}/verify-email/{emailVerificationToken}"
-
-        html_content = renderTemplate(
-            "account_verification_email.html",
-            username=username,
-            verification_url=verification_url
-        )
-        email_result = sendEmail(
-            to_email=email,
-            subject="Verifikasi Email LokaTrack",
-            html_content=html_content
-        )
-        
-        if email_result["status"] == "error":
-            logger.error(f"Failed to send verification email: {email_result['message']}")
-            # Continue execution even if email sending fails
-        
-        return {
-            "status": "success", 
-            "message": "Verification email sent"
-            }
-    
-    except Exception as e:
-        logger.error(f"Error sending verification email: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=("Sever Error while sending verification email: {str(e)}")
-        )
         
 async def verifyEmail(token: str):
     """ Process email verification and return appropriate HTML response """
