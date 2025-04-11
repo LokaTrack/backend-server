@@ -197,7 +197,8 @@ async def updatePasswordService(passwordDataInput, currentUser):
 async def updateProfilePictureService (profilePictureFile, currentUser): 
     """ Update Profile Picture"""
     try:
-        file_size = await profilePictureFile.read()
+        userImage = await profilePictureFile.read()
+        file_size = len(userImage)
         max_size = 1024 * 1024 * 5 # 5mb
 
         if len (file_size) > max_size:
