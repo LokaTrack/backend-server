@@ -1,8 +1,9 @@
 from app.config.firestore import db
 from app.models.authModel import EmailVerificationModel
 from app.utils.security import getPasswordHash, verifyPassword
-from app.utils.storeImage import uploadImageToStorage
+from app.utils.storeImage import uploadImageToStorage, uploadBytesToStorage
 from app.utils.emailVerification import sendVerificationEmail
+from app.utils.compress import compress_image
 from fastapi import HTTPException
 from datetime import datetime, timezone
 from google.cloud.firestore import FieldFilter
@@ -199,14 +200,14 @@ async def updateProfilePictureService (profilePictureFile, currentUser):
     try:
         userImage = await profilePictureFile.read()
         file_size = len(userImage)
-        max_size = 1024 * 1024 * 5 # 5mb
+        max_size = 1024 * 1024 * 10 # 10mb
 
-        if len (file_size) > max_size:
+        if file_size > max_size:
             raise HTTPException(
                 status_code=400,
                 detail={
                     "status": "fail",
-                    "message": "Ukuran file terlalu besar, maksimal 5MB",
+                    "message": "Ukuran file terlalu besar, maksimal 10MB",
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
@@ -224,19 +225,36 @@ async def updateProfilePictureService (profilePictureFile, currentUser):
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )    
-                                                                                    #{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}    
-        filename = f"{currentUser['userId']}_{currentUser['username']}_profile_picture"
+                        #{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}    
+        # filename = f"{currentUser['userId']}_{currentUser['username']}_profile_picture"
+        filename = f"{currentUser['userId']}_profile_picture"
         file_extension = profilePictureFile.filename.split(".")[-1]
         full_filename = f"{filename}.{file_extension}"
         
         # Upload file to storage
-        profile_picture_url = await uploadImageToStorage(
-            profilePictureFile, 
-            "profile-pictures",  # Folder in storage bucket
-            full_filename
+        # profile_picture_url = await uploadImageToStorage(
+        #     profilePictureFile, 
+        #     "profile-pictures",  # Folder in storage bucket
+        #     full_filename
+        # )
+
+        # compressed image
+        compressed_image, output_mime = await compress_image(
+            image_file=profilePictureFile,
+            quality=75,  # Adjust the compression level as needed
+            return_buffer=True,
+            max_size_kb=1024
+        )
+
+        # Upload compressed image to storage 
+        profile_picture_url = await uploadBytesToStorage(
+            bytes=compressed_image,
+            location="profile-pictures", # folder in storage bucket
+            fileName=full_filename,
+            content_type=output_mime
         )
         
-        # Update user profile with new picture URL
+        # Get user data 
         userDoc = (
             db.collection("userCollection")
             .document(currentUser["userId"])

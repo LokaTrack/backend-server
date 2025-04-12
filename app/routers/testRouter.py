@@ -1,20 +1,10 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Query
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 from typing import Dict, Union, Any, Optional
-import pyvips
 import os
-import uuid
-import time
-from tempfile import NamedTemporaryFile
-import shutil
-from PIL import Image
-from io import BytesIO
 from app.utils.compress import compress_image
 
-router = APIRouter(prefix="/api/v1/test", tags=["Image Compression by VIPS"])
-
-os.environ['PATH'] = r'C:\vips-dev-8.16\bin;' + os.environ['PATH']
-
+router = APIRouter(prefix="/api/v1/demo", tags=["Demo Router"])
 
 @router.post("/compress-images")
 async def compress_image_test(
@@ -27,7 +17,7 @@ async def compress_image_test(
     return_buffer: Optional [bool] = Form(False),  # Return buffer image for stored in storage bucket
     return_image: Optional [bool] = Form(True)  # Whether to return image directly
 ):
-    """Compress Images"""
+    """Image Compression by VIPS"""
     try:    
         result = await compress_image(
             file, 
