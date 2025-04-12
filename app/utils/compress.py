@@ -69,7 +69,7 @@ async def compress_image (
               
         # Process with VIPS
         start_time = time.time()
-
+        current_quality = quality
         # Default resize for very large images
         if not resize_width and not resize_height and (original_width > 1600 or original_height > 1600):
             scale = 1500 / max(original_width, original_height)
