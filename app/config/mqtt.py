@@ -2,13 +2,12 @@ import ssl
 import logging
 import os
 from paho.mqtt import client as mqtt_client
-from paho.mqtt.client import Client as MQTTClient
+from paho.mqtt.client import Client
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 load_dotenv()
 
-# MQTT Configuration - Consider using environment variables for sensitive values
 MQTT_BROKER = os.getenv("MQTT_BROKER")
 MQTT_TOPIC = os.getenv("MQTT_TOPIC")
 MQTT_PORT = int(os.getenv("MQTT_PORT"))
@@ -18,20 +17,16 @@ MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
 
 mqtt_client_instance = None
 
-def get_mqtt_client(callback_function=None):
+def mqttConfig(callback_function=None):
     """Get or create MQTT client singleton"""
     global mqtt_client_instance
     
     if mqtt_client_instance is not None:
         return mqtt_client_instance
     
-    # Use legacy callback API to avoid issues with newer paho-mqtt versions
-    # client = mqtt_client.Client(client_id=MQTT_CLIENT_ID)
-    client = MQTTClient(client_id=MQTT_CLIENT_ID, clean_session=True)
+    client = Client(client_id=MQTT_CLIENT_ID, clean_session=True)
     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
-    
-    # Set up SSL/TLS for secure connection
-    client.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS)
+    client.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS) # Set up SSL/TLS for secure connection
     client.tls_insecure_set(False)
     
     # Register the provided callback function for messages
@@ -40,8 +35,8 @@ def get_mqtt_client(callback_function=None):
     
     # Set default connect callback
     client.on_connect = on_connect
-    
     mqtt_client_instance = client
+    
     return client
 
 def on_connect(client, userdata, flags, rc):

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from app.utils.auth import get_current_user
 from app.services.trackerService import getTrackerLocation
-from app.services.locationService import get_last_location, get_all_last_locations
+from app.services.mqttService import get_last_location, get_all_last_locations
 from app.config.mqtt import mqtt_client_instance, MQTT_TOPIC
 from datetime import datetime
 

@@ -1,8 +1,10 @@
+from app.config.firestore import db
+from app.utils.time import convert_utc_to_wib
 import logging
 from fastapi import HTTPException
 from datetime import datetime, timezone
-from app.config.firestore import db
-from app.utils.time import convert_utc_to_wib
+from google.cloud import firestore
+
 
 logger = logging.getLogger(__name__)
 
@@ -54,3 +56,36 @@ async def getTrackerLocation(trackerId):
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
+    
+def updateTrackerLocation(tracker_id, latitude, longitude, timestamp):
+    """Update tracker location in Firestore"""
+    try:
+        # Check if tracker exists
+        tracker_ref = db.collection("trackerCollection").document(tracker_id)
+        tracker_doc = tracker_ref.get()
+        
+        if not tracker_doc.exists:
+            logger.warning(f"Tracker {tracker_id} not found, creating new tracker document")
+            # Create new tracker document
+            tracker_ref.set({
+                "trackerId": tracker_id,    
+                "trackerName": f"GPS Tracker {tracker_id}",
+                "registrationDate": timestamp,
+                "location": firestore.GeoPoint(latitude, longitude),  # Gunakan GeoPoint
+                "lastUpdated": timestamp
+            })
+            logger.info(f"Created new tracker {tracker_id} with initial location")
+        else:
+            # Update existing tracker
+            tracker_ref.update({
+                "location": firestore.GeoPoint(latitude, longitude),  # Gunakan GeoPoint
+                "lastUpdated": timestamp
+            })
+            logger.info(f"Updated location for tracker {tracker_id}")
+        
+        return True
+    except Exception as e:
+        logger.error(f"Error updating tracker location: {str(e)}")
+        return False
+
+

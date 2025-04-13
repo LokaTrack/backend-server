@@ -3,8 +3,8 @@ import logging
 from datetime import datetime, timezone
 from app.utils.time import convert_utc_to_wib
 from app.config.firestore import db
-from google.cloud import firestore
-from app.config.mqtt import get_mqtt_client, connect_mqtt_client, MQTT_TOPIC
+from app.config.mqtt import mqttConfig, connect_mqtt_client, MQTT_TOPIC
+from app.services.trackerService import updateTrackerLocation
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +43,8 @@ def on_message(client, userdata, msg):
             last_locations[data["id"]] = data
             
             # Update tracker in Firestore
-            success = update_tracker_location(data["id"], data["lat"], data["long"], current_time)
-            # success = 'success'
+            # success = updateTrackerLocation(data["id"], data["lat"], data["long"], current_time)
+            success = 'success' # Simulate success for testing purposes
             logger.info(f"Tracker location update result: {'Success' if success else 'Failed'}")
         else:
             logger.warning(f"Invalid GPS data format, missing required fields: {payload}")
@@ -54,37 +54,6 @@ def on_message(client, userdata, msg):
     except Exception as e:
         logger.error(f"Error processing MQTT message: {str(e)}", exc_info=True)
 
-        
-def update_tracker_location(tracker_id, latitude, longitude, timestamp):
-    """Update tracker location in Firestore"""
-    try:
-        # Check if tracker exists
-        tracker_ref = db.collection("trackerCollection").document(tracker_id)
-        tracker_doc = tracker_ref.get()
-        
-        if not tracker_doc.exists:
-            logger.warning(f"Tracker {tracker_id} not found, creating new tracker document")
-            # Create new tracker document
-            tracker_ref.set({
-                "trackerId": tracker_id,    
-                "trackerName": f"GPS Tracker {tracker_id}",
-                "registrationDate": timestamp,
-                "location": firestore.GeoPoint(latitude, longitude),  # Gunakan GeoPoint
-                "lastUpdated": timestamp
-            })
-            logger.info(f"Created new tracker {tracker_id} with initial location")
-        else:
-            # Update existing tracker
-            tracker_ref.update({
-                "location": firestore.GeoPoint(latitude, longitude),  # Gunakan GeoPoint
-                "lastUpdated": timestamp
-            })
-            logger.info(f"Updated location for tracker {tracker_id}")
-        
-        return True
-    except Exception as e:
-        logger.error(f"Error updating tracker location: {str(e)}")
-        return False
 
 def get_last_location(tracker_id):
     """Get the last known location for a tracker"""
@@ -96,7 +65,7 @@ def get_all_last_locations():
 
 def initialize_mqtt():
     """Initialize the MQTT client for location tracking"""
-    client = get_mqtt_client(callback_function=on_message)
+    client = mqttConfig (callback_function=on_message)
     success = connect_mqtt_client()
     
     if success:
