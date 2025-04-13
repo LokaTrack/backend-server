@@ -1,6 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter, userRouter, testRouter
+from app.services.locationService import initialize_mqtt, stop_mqtt
 from fastapi.exceptions import RequestValidationError
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from app.utils.error import (
     validation_exception_handler, 
@@ -29,6 +34,18 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 app.add_exception_handler(404, not_found_exception_handler)
 app.add_exception_handler(405, method_not_allowed_exception_handler)
+
+@app.on_event("startup")
+def startup_mqtt_client():
+    """Start MQTT client when FastAPI app starts"""
+    logger.info("Starting MQTT location tracking...")
+    initialize_mqtt()
+
+@app.on_event("shutdown")
+def shutdown_mqtt_client():
+    """Stop MQTT client when FastAPI app shuts down"""
+    logger.info("Stopping MQTT client...")
+    stop_mqtt()
 
 @app.get("/api/v1", tags=["Root"])
 async def root():
