@@ -8,7 +8,7 @@ from app.models.mqttModel import GPSDataModel
 from app.services.mqttService import process_gps_data
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Load environment variables
@@ -40,17 +40,27 @@ def on_message(client, userdata, msg):
     try:
         # Decode the message payload
         payload = msg.payload.decode('utf-8')
-        logger.info(f"Received message on topic {msg.topic}: {payload}")
+        # logger.info(f"Raw payload: {msg.payload}")
+        # b'{\n  "id": "CC:DB:A7:9B:7A:00",\n  "lat": -6.2088,\n  "long": 106.8456\n}'
         
         # Parse the JSON data
         data = json.loads(payload)
-        
+        logger.debug(f"Received message on topic '{msg.topic}': {data}")
+        # logger.info(f"data: {payload}")
+        # {
+        #   "id": "CC:DB:A7:9B:7A:00",
+        #   "lat": -6.2088,
+        #   "long": 106.8456
+        # }        
+
+
         # Create model instance, validate data 
         gps_data = GPSDataModel(**data)
         
         # Process the GPS data (update Firestore)
         process_gps_data(gps_data)
-        
+        # For demonstration, we will just log the data
+
     except Exception as e:
         logger.error(f"Error processing MQTT message: {str(e)}")
 
