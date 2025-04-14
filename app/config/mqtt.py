@@ -71,12 +71,29 @@ def on_disconnect(client, userdata, rc):
     else:
         logger.info("Disconnected from MQTT broker")
 
+def clear_retained_messages():
+    """Clear retained messages on the topic"""
+    try:
+        client = get_mqtt_client()
+        client.publish(MQTT_TOPIC, payload="", qos=0, retain=True)
+        logger.info(f"Cleared retained messages on topic: {MQTT_TOPIC}")
+        return True
+    except Exception as e:
+        logger.error(f"Error clearing retained messages: {str(e)}")
+        return False
+
 def setup_mqtt_client():
     """Initialize and configure the MQTT client"""
     global mqtt_client
     
-    # Create new MQTT client instance
-    mqtt_client = mqtt.Client(client_id=MQTT_CLIENT_ID)
+    # # Create new MQTT client instance
+    # mqtt_client = mqtt.Client(client_id=MQTT_CLIENT_ID)
+
+    # Create new MQTT client instance with protocol v311
+    mqtt_client = mqtt.Client(client_id=MQTT_CLIENT_ID, protocol=mqtt.MQTTv311)
+    
+    # Enable automatic reconnection with backoff
+    mqtt_client.reconnect_delay_set(min_delay=1, max_delay=30)
     
     # Set authentication
     if MQTT_USERNAME and MQTT_PASSWORD:
@@ -107,7 +124,7 @@ def start_mqtt_client():
         
         # Connect to the broker
         logger.info(f"Connecting to MQTT broker at {MQTT_BROKER}:{MQTT_PORT}")
-        client.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
+        client.connect(MQTT_BROKER, MQTT_PORT, keepalive=120)
         
         # Start the loop in a background thread
         client.loop_start()

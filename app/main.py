@@ -3,9 +3,12 @@ from fastapi import FastAPI, HTTPException
 from app.config.logging import configure_logging
 from fastapi import FastAPI, HTTPException
 from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter, userRouter, testRouter, trackerRouter
-from app.config.mqtt import start_mqtt_client, stop_mqtt_client
+from app.config.mqtt import start_mqtt_client, stop_mqtt_client, clear_retained_messages
 from fastapi.exceptions import RequestValidationError
 import uvicorn
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.utils.error import (
     validation_exception_handler, 
@@ -51,6 +54,8 @@ async def startup_event():
     """Start MQTT client on application startup"""
     # Start the MQTT client
     start_mqtt_client()
+    # Clear retained messages
+    clear_retained_messages()    
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -59,6 +64,7 @@ async def shutdown_event():
     stop_mqtt_client()
 
 if __name__ == "__main__" : 
+    logger.debug("Starting FastAPI application, log level: %s", log_level)
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level=log_level.lower())
 # now you can run the app using the command:
 # python -m app.main
