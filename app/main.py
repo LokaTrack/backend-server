@@ -3,6 +3,7 @@ from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter
 from app.services.mqttService import initialize_mqtt, stop_mqtt
 from fastapi.exceptions import RequestValidationError
 import logging
+import uvicorn
 
 logger = logging.getLogger(__name__)
 
@@ -53,3 +54,6 @@ async def root():
         "status": "success", 
         "message": "Selamat datang di LokaTrack API"
     }
+
+if __name__ == "__main__" : 
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
