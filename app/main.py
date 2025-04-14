@@ -1,5 +1,8 @@
+import os
 from fastapi import FastAPI, HTTPException
-from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter, userRouter, testRouter
+from app.config.logging import configure_logging
+from fastapi import FastAPI, HTTPException
+from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter, userRouter, testRouter, trackerRouter
 from app.config.mqtt import start_mqtt_client, stop_mqtt_client
 from fastapi.exceptions import RequestValidationError
 import uvicorn
@@ -11,6 +14,9 @@ from app.utils.error import (
     not_found_exception_handler,
     method_not_allowed_exception_handler
 )
+
+log_level = os.getenv("LOG_LEVEL", "INFO")
+configure_logging(log_level)
 
 app = FastAPI(
     title="Lokatani GPS Tracking API",
@@ -24,6 +30,7 @@ app.include_router(packageRouter.router)
 app.include_router(deliveryRouter.router)
 app.include_router(profileRouter.router)
 app.include_router(userRouter.router)
+app.include_router(trackerRouter.router)
 app.include_router(testRouter.router)
   
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
@@ -52,7 +59,7 @@ async def shutdown_event():
     stop_mqtt_client()
 
 if __name__ == "__main__" : 
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level=log_level.lower())
 # now you can run the app using the command:
 # python -m app.main
 # or using the command:
