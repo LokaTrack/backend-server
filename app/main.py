@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter, userRouter, testRouter
+from app.config.mqtt import start_mqtt_client, stop_mqtt_client
 from fastapi.exceptions import RequestValidationError
+import uvicorn
 
 from app.utils.error import (
     validation_exception_handler, 
@@ -36,3 +38,22 @@ async def root():
         "status": "success", 
         "message": "Selamat datang di LokaTrack API"
     }
+
+@app.on_event("startup")
+async def startup_event():
+    """Start MQTT client on application startup"""
+    # Start the MQTT client
+    start_mqtt_client()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop MQTT client on application shutdown"""
+    # Stop the MQTT client
+    stop_mqtt_client()
+
+if __name__ == "__main__" : 
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+# now you can run the app using the command:
+# python -m app.main
+# or using the command:
+# uvicorn app.main:app --host 0.0.0.0 --port 8000

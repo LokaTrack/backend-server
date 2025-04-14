@@ -13,9 +13,12 @@ This is the backend API for the LokaTrack project. The API serves as the backend
 TrackerCollection  →  IoT Tracker (Perangkat GPS yang digunakan untuk tracking)
  ├── {trackerId} (Document)
  │   ├── trackerName: "IoT GPS Device A"
+ │   ├── trackerId: "AB:09:CD:EF:GH"
  │   ├── registrationDate: "2025-01-01"
- │   ├── latitude: -6.2088
- │   ├── longitude: 106.8456
+ │   ├── location: {
+ │   |          latitude: -6.2088,
+ │   |          longitude: 106.8456
+ │   |      }
  │   ├── lastUpdated: "2025-03-22T10:30:00Z"
 
 userCollection  →  Data Pengguna (Driver & Admin)
