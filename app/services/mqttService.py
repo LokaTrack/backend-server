@@ -43,8 +43,9 @@ def on_message(client, userdata, msg):
             last_locations[data["id"]] = data
             
             # Update tracker in Firestore
-            # success = updateTrackerLocation(data["id"], data["lat"], data["long"], current_time)
-            success = 'success' # Simulate success for testing purposes
+            success = updateTrackerLocation(data["id"], data["lat"], data["long"], current_time)
+            # success = 'success' # Simulate success for testing purposes
+
             logger.info(f"Tracker location update result: {'Success' if success else 'Failed'}")
         else:
             logger.warning(f"Invalid GPS data format, missing required fields: {payload}")
@@ -65,7 +66,7 @@ def get_all_last_locations():
 
 def initialize_mqtt():
     """Initialize the MQTT client for location tracking"""
-    client = mqttConfig (callback_function=on_message)
+    client = mqttConfig(callback_function=on_message)
     success = connect_mqtt_client()
     
     if success:

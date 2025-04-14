@@ -44,7 +44,7 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("Connected to MQTT Broker!")
         # Subscribe to the GPS topic
-        client.subscribe(MQTT_TOPIC, qos=2)
+        client.subscribe(MQTT_TOPIC, qos=0)
         # (<MQTTErrorCode.MQTT_ERR_SUCCESS: 0>, 1)
     else:
         logger.error(f"Failed to connect to MQTT Broker, return code {rc}")
