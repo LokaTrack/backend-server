@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from google.cloud import firestore
 from app.config.firestore import db
 from app.models.mqttModel import GPSDataModel
 
@@ -17,10 +18,11 @@ async def process_gps_data(gps_data: GPSDataModel):
         
         # Prepare location data for Firestore
         location_data = {
-            "location": {
-                "latitude": gps_data.lat,
-                "longitude": gps_data.long
-            },
+            # "location": {
+            #     "latitude": gps_data.lat,
+            #     "longitude": gps_data.long
+            # },
+            "location": firestore.GeoPoint(gps_data.lat, gps_data.long),
             "lastUpdated": datetime.now(timezone.utc)
         }
         
@@ -33,7 +35,7 @@ async def process_gps_data(gps_data: GPSDataModel):
         if tracker_doc.exists:
             # Update existing tracker document
             tracker_ref.update(location_data)
-            logger.info(f"Updated location for tracker {tracker_id}")
+            logger.debug(f"Updated location for tracker {tracker_id}")
         else:
             # Create new tracker document with basic info
             tracker_data = {
@@ -43,7 +45,7 @@ async def process_gps_data(gps_data: GPSDataModel):
                 **location_data
             }
             tracker_ref.set(tracker_data)
-            logger.info(f"Created new tracker record for {tracker_id}")
+            logger.debug(f"Created new tracker record for {tracker_id}")
         
         return True
     
@@ -62,10 +64,11 @@ def process_gps_data(gps_data: GPSDataModel):
         
         # Prepare location data for Firestore
         location_data = {
-            "location": {
-                "latitude": gps_data.lat,
-                "longitude": gps_data.long
-            },
+            # "location": {
+            #     "latitude": gps_data.lat,
+            #     "longitude": gps_data.long
+            # },
+            "location": firestore.GeoPoint(gps_data.lat, gps_data.long),
             "lastUpdated": datetime.now(timezone.utc)
         }
         
@@ -78,7 +81,7 @@ def process_gps_data(gps_data: GPSDataModel):
         if tracker_doc.exists:
             # Update existing tracker document
             tracker_ref.update(location_data)
-            logger.info(f"Updated location for tracker {tracker_id}")
+            logger.debug(f"Updated location for tracker {tracker_id}")
         else:
             # Create new tracker document with basic info
             tracker_data = {
@@ -88,7 +91,7 @@ def process_gps_data(gps_data: GPSDataModel):
                 **location_data
             }
             tracker_ref.set(tracker_data)
-            logger.info(f"Created new tracker record for {tracker_id}")
+            logger.debug(f"Created new tracker record for {tracker_id}")
         
         return True
     
