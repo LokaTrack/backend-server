@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from app.config.logging import configure_logging
 from fastapi import FastAPI, HTTPException
-from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter, userRouter, testRouter, trackerRouter
+from app.routers import authRouter, packageRouter, deliveryRouter, profileRouter, userRouter, testRouter, trackerRouter #ocrRouter
 from app.config.mqtt import start_mqtt_client, stop_mqtt_client, clear_retained_messages
 from fastapi.exceptions import RequestValidationError
 import uvicorn
@@ -35,6 +35,7 @@ app.include_router(profileRouter.router)
 app.include_router(userRouter.router)
 app.include_router(trackerRouter.router)
 app.include_router(testRouter.router)
+# app.include_router(ocrRouter.router)
   
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)

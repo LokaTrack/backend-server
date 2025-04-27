@@ -1,5 +1,3 @@
-
-import urllib
 from urllib.parse import unquote
 from app.config.firestore import db
 from fastapi import HTTPException
