@@ -69,10 +69,11 @@ async def compress_image (
               
         # Process with VIPS
         start_time = time.time()
+
         current_quality = quality
         # Default resize for very large images
         if not resize_width and not resize_height and (original_width > 1600 or original_height > 1600):
-            scale = 1500 / max(original_width, original_height)
+            scale = 1600 / max(original_width, original_height)
             image = image.resize(scale)
 
         # Resize if dimensions are provided
@@ -103,13 +104,12 @@ async def compress_image (
         #
         #  - optimize_coding=True	Gunakan Huffman table optimal (ukuran file lebih kecil) -> only for jpg jpeg
         #
-        #  PNG
+        #  PNG (Using deflate algorithm (zlib) for PNG compression)
         #  - filter	                Filter PNG predictor (0–5, default: libvips pilih otomatis)
-        #  - compression (0-9)	    Higher compression level means LOWER quality (default 6), 9 = kompresi maksimal  
-        #                           Using deflate algorithm (zlib) for PNG compression
-        #  - effort (0-10)	        Higher effort longger time to compress (default 6), 10 = effort maksimal
-        #                           Higher quality → Lower compression level 
-        #                           Lower quality → Higher compression level
+        #  - compression (0-9)	    Higher compression level means LOWER size (default 6), 
+        #                           Lower compression level means Kompresi cepat, ukuran lebih besar
+
+        #  - effort (0-10)	        Effort to find optimal compression (default 6), 10 = effort maksimal
         # <--- parameter  --->
         else :
             # for lossy format

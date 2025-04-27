@@ -381,3 +381,43 @@ async def updateEmailService(userDataInput, currentUser):
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
+    
+async def updateTrackerService(userDataInput, currentUser): 
+    """Update Tracker ID in User Data"""
+    try:
+        userCollection = db.collection("userCollection")
+        userDoc = userCollection.document(currentUser["userId"]).get()
+        
+        if not userDoc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": "User tidak ditemukan",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        
+        # Update tracker ID in user data
+        userCollection.document(currentUser["userId"]).update(userDataInput.dict())
+        
+        return {
+            "status": "success",
+            "message": "Tracker ID berhasil diperbarui",
+            "data": {
+                "username": currentUser["username"],
+                "trackerId": userDataInput.trackerId
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating tracker ID: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Terjadi kesalahan: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )

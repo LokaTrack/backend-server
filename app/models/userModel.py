@@ -42,6 +42,10 @@ class UpdatePasswordModel(BaseModel):
     newPasswordConfirmation: str
     lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class UpdateTrackerModel(BaseModel):
+    trackerId: str
+    lastUpdate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class UserModel(BaseModel):
     # generates a new UUID each time the User object is created.
     userId: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -59,3 +63,4 @@ class UserModel(BaseModel):
      
     class Config:
         from_attributes = True
+
