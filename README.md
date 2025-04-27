@@ -20,7 +20,15 @@ TrackerCollection  →  IoT Tracker (Perangkat GPS yang digunakan untuk tracking
  │   |          longitude: 106.8456
  │   |      }
  │   ├── lastUpdated: "2025-03-22T10:30:00Z"
-
+ │   └── locationHistory/ (Sub-collection)
+ │       ├── {auto-id-1}/
+ │       │   ├── timestamp: timestamp
+ │       │   └── location: GeoPoint(-6.2088, 106.8456)
+ │       ├── {auto-id-2}/
+ │       │   ├── timestamp: timestamp
+ │       │   └── location: GeoPoint(-6.2089, 106.8457)
+ │       └── 
+  
 userCollection  →  Data Pengguna (Driver & Admin)
  ├── {user_id} (Document)
  │   ├── username: "John Doe"

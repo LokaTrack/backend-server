@@ -21,6 +21,7 @@ MQTT_TOPIC = os.getenv("MQTT_TOPIC", "lokatrack/gps")
 MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "lokatrack-gps-1")
 MQTT_USERNAME = os.getenv("MQTT_USERNAME", "lokatrack-gps-1")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
+MQTT_SECURE = os.getenv("MQTT_TLS", "true").lower()
 
 # MQTT client instance
 mqtt_client = None
@@ -99,8 +100,11 @@ def setup_mqtt_client():
     if MQTT_USERNAME and MQTT_PASSWORD:
         mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     
-    # Setup TLS for secure connection
-    mqtt_client.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS)
+    logger.debug(f"MQTT Secure is {MQTT_SECURE}")
+    if MQTT_SECURE == "true":
+        # Setup TLS for secure connection
+        mqtt_client.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS)
+        # mqtt_client.tls_insecure_set(True)
     
     # Set callbacks
     mqtt_client.on_connect = on_connect

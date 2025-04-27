@@ -14,39 +14,58 @@ async def process_gps_data(gps_data: GPSDataModel):
             logger.error("Firestore database not initialized")
             return False
 
-        tracker_id = gps_data.id
-        
-        # Prepare location data for Firestore
-        location_data = {
+        trackerId = gps_data.id
+        geopoint = firestore.GeoPoint(gps_data.lat, gps_data.long)
+        timestamp = datetime.now(timezone.utc)
+
+        locationData = {
             # "location": {
             #     "latitude": gps_data.lat,
             #     "longitude": gps_data.long
             # },
-            "location": firestore.GeoPoint(gps_data.lat, gps_data.long),
-            "lastUpdated": datetime.now(timezone.utc)
+            "location": geopoint,
+            "lastUpdated": timestamp
         }
         
         # Update the tracker document in Firestore
-        tracker_ref = db.collection("trackerCollection").document(tracker_id)
+        trackerRef = db.collection("trackerCollection").document(trackerId)
         
         # Check if the tracker document exists
-        tracker_doc = tracker_ref.get()
+        trackerDoc = trackerRef.get()
         
-        if tracker_doc.exists:
+        batch = db.batch()
+
+        if trackerDoc.exists:
             # Update existing tracker document
-            tracker_ref.update(location_data)
-            logger.debug(f"Updated location for tracker {tracker_id}")
+            batch.update(trackerRef, locationData)
+            # trackerRef.update(locationData)
+            logger.debug(f"Updated location for tracker {trackerId}")
         else:
             # Create new tracker document with basic info
             tracker_data = {
-                "trackerId": tracker_id,
-                "trackerName": f"GPS Tracker {tracker_id}",
+                "trackerId": trackerId,
+                "trackerName": f"GPS Tracker {trackerId}",
                 "registrationDate": datetime.now(timezone.utc),
-                **location_data
+                **locationData
             }
-            tracker_ref.set(tracker_data)
-            logger.debug(f"Created new tracker record for {tracker_id}")
-        
+            batch.set(trackerRef, tracker_data)
+            # trackerRef.set(tracker_data)
+            logger.debug(f"Created new tracker record for {trackerId}")
+
+        # save location to history
+        # Create document with auto-generated ID in history subcollection
+        historyData = {
+            "location": geopoint,
+            "timestamp": timestamp
+            }
+        # save location to history
+        historyRef = trackerRef.collection("locationHistory").document()
+        # historyRef.set(locationHistory)   
+        batch.set(historyRef, historyData)
+
+        # Commit all changes
+        batch.commit()
+          
         return True
     
     except Exception as e:
@@ -60,39 +79,58 @@ def process_gps_data(gps_data: GPSDataModel):
             logger.error("Firestore database not initialized")
             return False
 
-        tracker_id = gps_data.id
-        
+        trackerId = gps_data.id
+        geopoint = firestore.GeoPoint(gps_data.lat, gps_data.long)
+        timestamp = datetime.now(timezone.utc)
+
         # Prepare location data for Firestore
-        location_data = {
+        locationData = {
             # "location": {
             #     "latitude": gps_data.lat,
             #     "longitude": gps_data.long
             # },
-            "location": firestore.GeoPoint(gps_data.lat, gps_data.long),
-            "lastUpdated": datetime.now(timezone.utc)
+            "location": geopoint,
+            "lastUpdated": timestamp
         }
         
         # Update the tracker document in Firestore
-        tracker_ref = db.collection("trackerCollection").document(tracker_id)
+        trackerRef = db.collection("trackerCollection").document(trackerId)
         
         # Check if the tracker document exists
-        tracker_doc = tracker_ref.get()
-        
-        if tracker_doc.exists:
+        trackerDoc = trackerRef.get()     
+
+        # Start a batch write
+        batch = db.batch()
+
+        if trackerDoc.exists:
             # Update existing tracker document
-            tracker_ref.update(location_data)
-            logger.debug(f"Updated location for tracker {tracker_id}")
+            batch.update(trackerRef, locationData)
+            # trackerRef.update(locationData)
+            logger.debug(f"Updated location for tracker {trackerId}")
         else:
             # Create new tracker document with basic info
             tracker_data = {
-                "trackerId": tracker_id,
-                "trackerName": f"GPS Tracker {tracker_id}",
+                "trackerId": trackerId,
+                "trackerName": f"GPS Tracker {trackerId}",
                 "registrationDate": datetime.now(timezone.utc),
-                **location_data
+                **locationData
             }
-            tracker_ref.set(tracker_data)
-            logger.debug(f"Created new tracker record for {tracker_id}")
-        
+            batch.set(trackerRef, tracker_data)
+            # trackerRef.set(tracker_data)
+            logger.debug(f"Created new tracker record for {trackerId}")
+
+        historyData = {
+              "location": geopoint,
+              "timestamp": timestamp
+          }
+        # save location to history
+        historyRef = trackerRef.collection("locationHistory").document()
+        # historyRef.set(locationHistory)   
+        batch.set(historyRef, historyData)
+
+        # Commit all changes
+        batch.commit()
+
         return True
     
     except Exception as e:
