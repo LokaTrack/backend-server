@@ -7,6 +7,7 @@ from app.config.mqtt import start_mqtt_client, stop_mqtt_client, clear_retained_
 from fastapi.exceptions import RequestValidationError
 import uvicorn
 import logging
+from fastapi.middleware.cors import CORSMiddleware  
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,15 @@ app = FastAPI(
     title="Lokatani GPS Tracking API",
     docs_url="/api/v1/lokatrack/dokumentasi",
     openapi_url="/api/v1/lokatrack/openapi.json"  
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 
 # Include routers
