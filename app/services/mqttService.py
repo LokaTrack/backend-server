@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from google.cloud import firestore
 from app.config.firestore import db
 from app.models.mqttModel import GPSDataModel
+from uuid_utils import uuid7
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -58,8 +59,11 @@ async def process_gps_data(gps_data: GPSDataModel):
             "location": geopoint,
             "timestamp": timestamp
             }
+        
+        historyId = str(uuid7())
+
         # save location to history
-        historyRef = trackerRef.collection("locationHistory").document()
+        historyRef = trackerRef.collection("locationHistory").document(historyId)
         # historyRef.set(locationHistory)   
         batch.set(historyRef, historyData)
 
@@ -122,9 +126,13 @@ def process_gps_data(gps_data: GPSDataModel):
         historyData = {
               "location": geopoint,
               "timestamp": timestamp
-          }
+        }
+        
+        # Generate UUIDv7 (timestamp-based)
+        historyId = str(uuid7())
+
         # save location to history
-        historyRef = trackerRef.collection("locationHistory").document()
+        historyRef = trackerRef.collection("locationHistory").document(historyId)
         # historyRef.set(locationHistory)   
         batch.set(historyRef, historyData)
 
