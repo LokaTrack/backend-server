@@ -158,7 +158,7 @@ async def getItemsData (imageFile):
             "status": "success",
             "message": "Item data extracted successfully",
             "data": {
-                "itemData": itemResult,
+                "itemsData": itemResult,
                 "rawText": text, # Optionally return raw text for debugging
                 "processingTime": processingTime # for debugging
             }
@@ -225,7 +225,7 @@ async def getReturnItems (imageFile):
             "status": "success",
             "message": "Return Item berhasil diambil",
             "data": {
-                "itemData": itemResult,
+                "itemsData": itemResult,
                 "rawText": text, # Optionally return raw text for debugging
                 "processingTime": processingTime # for debugging
             }
