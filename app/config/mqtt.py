@@ -3,6 +3,7 @@ import json
 import os
 import ssl
 import paho.mqtt.client as mqtt
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from app.models.mqttModel import GPSDataModel
 from app.services.mqttService import process_gps_data
@@ -39,6 +40,8 @@ def on_connect(client, userdata, flags, rc):
 # Callback when a message is received from the server
 def on_message(client, userdata, msg):
     try:
+        receive_time = datetime.now(timezone.utc)
+        
         # Decode the message payload
         payload = msg.payload.decode('utf-8')
         # logger.info(f"Raw payload: {msg.payload}")
@@ -53,7 +56,17 @@ def on_message(client, userdata, msg):
         #   "lat": -6.2088,
         #   "long": 106.8456
         # }        
-
+        
+        # Jika ada timestamp di pesan, hitung latency
+        if 'timestamp' in data:
+            try:
+                # Parse timestamp dari pesan
+                send_time = datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
+                # Hitung latency dalam milidetik
+                latency_ms = (receive_time - send_time).total_seconds() * 1000
+                logger.info(f"MQTT Latency: {latency_ms:.2f}ms for message from {data.get('id', 'unknown')}")
+            except (ValueError, KeyError) as e:
+                logger.warning(f"Could not calculate latency: {e}")
 
         # Create model instance, validate data 
         gps_data = GPSDataModel(**data)
