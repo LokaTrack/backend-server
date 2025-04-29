@@ -13,11 +13,11 @@ router = APIRouter(
     # dependencies=[Depends(get_current_user)] # Uncomment to protect all endpoints in this router
 )
 
-@router.post("/order-no")
-async def ocr_get_order_no(file: UploadFile = File(...)):
-    """ Uploads an image file and extracts the Order No using OCR. """
+@router.post("/")
+async def get_all_items(images: List[UploadFile] = File(...)):
+    """Uploads one or more image files and extracts item data using OCR."""
     try:
-        result = await getOrderNo(file)
+        result = await getItemsData(images)
         return result
     except HTTPException as e:
         return JSONResponse(
@@ -25,12 +25,11 @@ async def ocr_get_order_no(file: UploadFile = File(...)):
             content=e.detail
         )
 
-
-@router.post("/")
-async def get_all_items(files: List[UploadFile] = File(...)):
-    """Uploads one or more image files and extracts item data using OCR."""
+@router.post("/order-no")
+async def ocr_get_order_no(image: UploadFile = File(...)):
+    """ Uploads an image file and extracts the Order No using OCR. """
     try:
-        result = await getItemsData(files)
+        result = await getOrderNo(image)
         return result
     except HTTPException as e:
         return JSONResponse(
@@ -39,10 +38,10 @@ async def get_all_items(files: List[UploadFile] = File(...)):
         )
 
 @router.post("/return-item")
-async def get_return_items_only(files: List[UploadFile] = File(...)):
+async def get_return_items_only(images: List[UploadFile] = File(...)):
     """Uploads one or more image files and extracts return item data using OCR."""
     try:
-        result = await getReturnItems(files)
+        result = await getReturnItems(images)
         return result
     except HTTPException as e:
         return JSONResponse(
