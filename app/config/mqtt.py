@@ -64,7 +64,7 @@ def on_message(client, userdata, msg):
                 send_time = datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
                 # Hitung latency dalam milidetik
                 latency_ms = (receive_time - send_time).total_seconds() * 1000
-                logger.info(f"MQTT Latency: {latency_ms:.2f}ms for message from {data.get('id', 'unknown')}")
+                logger.debug(f"MQTT Latency: {latency_ms:.2f}ms for message from {data.get('id', 'unknown')}")
             except (ValueError, KeyError) as e:
                 logger.warning(f"Could not calculate latency: {e}")
 
