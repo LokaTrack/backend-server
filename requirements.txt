@@ -15,3 +15,4 @@ pyvips>=2.2.0
 paho-mqtt==2.1.0
 uuid_utils==0.10.0
 pytesseract==0.3.13
+pycroptodome
