@@ -3,48 +3,14 @@ import binascii
 import logging
 from Crypto.Util.strxor import strxor
 import struct
+import os
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_KEY = bytes(
-    [
-        0x01,
-        0x02,
-        0x03,
-        0x04,
-        0x05,
-        0x06,
-        0x07,
-        0x08,
-        0x09,
-        0x0A,
-        0x0B,
-        0x0C,
-        0x0D,
-        0x0E,
-        0x0F,
-        0x10,
-        0xC9,
-        0xCA,
-        0xCB,
-        0xCC,
-        0xCD,
-        0xCE,
-        0xCF,
-        0xD0,
-        0xD1,
-        0xD2,
-        0xD3,
-        0xD4,
-        0xD5,
-        0xD6,
-        0xD7,
-        0xD8,
-    ]
-)
+MQTT_ENCRYPT_KEY = os.getenv("MQTT_ENCRYPT_KEY")
+HEX_KEY = bytes.fromhex(MQTT_ENCRYPT_KEY)
 
-
-def decrypt_message(encrypted_hex_message: str, key=DEFAULT_KEY):
+def decrypt_message(encrypted_hex_message: str, key=HEX_KEY):
     """
     Decrypts a hex-encoded ChaCha20 encrypted message.
     Args:
