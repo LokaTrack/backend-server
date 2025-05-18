@@ -33,8 +33,7 @@ async def uploadBytesToStorage(bytes, location, fileName, content_type):
     try:
         bucket = storage_client.bucket(os.getenv("GCS_BUCKET_NAME"))
         blob = bucket.blob(f"{location}/{fileName}")
-        blob.upload_from_string (data= bytes, 
-                                 content_type= content_type)
+        blob.upload_from_string (data=bytes, content_type= content_type)
         blob.make_public()
         url = blob.public_url
         

@@ -11,20 +11,23 @@ import time
 
 logger = logging.getLogger(__name__)
 
-async def compress_image (
-    image_file, 
-    quality: int = 75, 
-    return_buffer: bool = True, # DEFAULT Return as buffer
+logging.getLogger("pyvips.vobject").setLevel(logging.INFO)
+logging.getLogger("python_multipart.multipart").setLevel(logging.INFO)
+
+async def compress_image(
+    image_file,
+    quality: int = 75,
+    return_buffer: bool = True,  # DEFAULT Return as buffer
     max_size_kb: Optional[int] = None,
     resize_width: Optional[int] = None,
     compression_level: Optional[int] = None,
     resize_height: Optional[int] = None,
-    is_lossless: Optional [bool] = False,
-    return_image: Optional [bool] = False
+    is_lossless: Optional[bool] = False,
+    return_image: Optional[bool] = False,
 ):
     """
     Compress and optimize an image using libvips.
-    
+
     Args:
         image_file: UploadFile object containing the image
         quality: Quality setting (1-100, higher is better quality)
@@ -35,7 +38,7 @@ async def compress_image (
         resize_height: Height to resize the image to
         is_lossless: If True, uses lossless compression (PNG)
         return_image: If True, returns a StreamingResponse for direct download
-        
+
     Returns:
         Depending on parameters:
         - (bytes, mime_type) if return_buffer=True
@@ -43,15 +46,15 @@ async def compress_image (
         - Dict with compression statistics otherwise
     """
     if not image_file.content_type.startswith("image/"):
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "status": "fail",
-                    "message": "File berupa gambar (jpg, png, gif) diperlukan!",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-            )
-    try : 
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "status": "fail",
+                "message": "File berupa gambar (jpg, png, gif) diperlukan!",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+    try:
         # read file image and save to buffer
         fileBytes = await image_file.read()
         await image_file.seek(0)  # Reset the file pointer to the beginning
@@ -66,7 +69,7 @@ async def compress_image (
         original_size = len (fileBytes) # in bytes
         original_width = image.width
         original_height = image.height
-              
+
         # Process with VIPS
         start_time = time.time()
 
@@ -91,7 +94,9 @@ async def compress_image (
             output_mime = "image/png"
             compression_level = max(1, 9 - int(quality / 10))
             compression_level = 1 if compression_level < 1 else compression_level
-            compressed_image = image.write_to_buffer(".png", compression = compression_level, effort = 9) # save image to png lossless format 
+            compressed_image = image.write_to_buffer(
+                ".png", compression=compression_level, effort=9
+            )  # save image to png lossless format
 
             # if len (compressed_image) > original_size:
             #     # If the compressed image is larger than the original, use lossless compression
@@ -106,10 +111,10 @@ async def compress_image (
         #
         #  PNG (Using deflate algorithm (zlib) for PNG compression)
         #  - filter	                Filter PNG predictor (0–5, default: libvips pilih otomatis)
-        #  - compression (0-9)	    Higher compression level means LOWER size (default 6), 
+        #  - compression (0-9)	    Higher compression level means LOWER size (default 6),
         #                           Lower compression level means Kompresi cepat, ukuran lebih besar
 
-        #  - effort (0-10)	        Effort to find optimal compression (default 6), 10 = effort maksimal
+        #  - effort (0-10)	        Seberapa keras CPU bekerja saat melakukan quantisation jika pallete-True (mengubah gambar menjadi palet 8-bit)
         # <--- parameter  --->
         else :
             # for lossy format
@@ -200,14 +205,12 @@ async def compress_image (
                 "data": {
                     "original": original_statistics,
                     "compressed": compressed_statistics,
-                    "image_data": image_data
-                }
+                    "image_data": image_data,
+                },
             }
-
 
     except Exception as e:
         logger.error(f"Error while compressing image  : {str(e)}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Server Error while compressing image: {str(e)}"
+            status_code=500, detail=f"Server Error while compressing image: {str(e)}"
         )

@@ -1,10 +1,12 @@
-from urllib.parse import unquote
-from app.config.firestore import db
-from fastapi import HTTPException
-from datetime import datetime, timezone
-from app.utils.location import getPackageLocation
-from uuid import uuid4
+from app.models.deliveryModel import packageDeliveryReturnModel, returnItemsModel
+from app.utils.storeImage import uploadBytesToStorage
+from app.utils.compress import compress_image
 from app.utils.time import convert_utc_to_wib
+from app.config.firestore import db
+from datetime import datetime, timezone
+from fastapi import HTTPException
+from urllib.parse import unquote
+from uuid import uuid4
 import logging
 logger = logging.getLogger(__name__)
 
@@ -220,6 +222,262 @@ async def updateDeliveryStatus (deliveryDataInput, currentUser):
             }
         )
 
+async def updateDeliveryStatusReturn(listImages, orderNo, returnItems, reason, currentUser):
+    try:
+        # Check if user is admin or driver
+        if currentUser["role"] not in ["admin", "driver"]:    
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "status": "fail",
+                    "message": "Anda tidak memiliki akses untuk mengupdate order.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )       
+
+        # Validate if the package exists in Firestore's packageDeliveryCollection
+        orderNoFiltered = orderNo.replace("/", "_")
+        packageDeliveryDoc = (
+            db.collection("packageDeliveryCollection")
+            .document(orderNoFiltered)
+            .get()
+        )
+        if not packageDeliveryDoc.exists: 
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": f"Paket dengan id '{orderNo}' tidak ditemukan.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        
+        packageDeliveryData = packageDeliveryDoc.to_dict()
+
+        # Check if the user has permission to modify the package
+        if packageDeliveryData.get("driverId") != currentUser["userId"] and currentUser["role"] != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "status": "fail",
+                    "message": f"Anda tidak memiliki akses untuk mengupdate paket dengan id '{orderNo}'.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+
+        # status -> "On Delivery", "Check-in", "Check-out", "Return"
+        valid_status_transitions = {
+            "On Delivery": "invalid",
+            "Check-in": "Return", 
+            "Check-out": "invalid", 
+            "Return": "invalid"
+        }
+
+        currentStatus = packageDeliveryData.get("deliveryStatus")
+        nextStatus = "Return" # next status is must return
+
+        if valid_status_transitions.get(currentStatus) != nextStatus:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "fail",
+                    "message": f"Tidak bisa mengubah status paket dari '{currentStatus}' menjadi '{nextStatus}'.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+
+        # loopng check return items in deliveryData
+        itemsOrderCollection = (
+            db.collection("packageOrderCollection")
+            .document(orderNoFiltered)
+            .collection("items")
+            .get()
+        )
+        orderItems = [item.to_dict() for item in itemsOrderCollection]
+
+        # check if items in return data is in orderItems
+        for item in returnItems:
+            itemMatch = False
+            for orderItem in orderItems:
+                if item["name"] == orderItem["name"]:     
+                    itemMatch = True
+                    # check if item quantity is more than order quantity
+                    if item["quantity"] > orderItem["quantity"]:
+                        raise HTTPException(
+                            status_code=400,
+                            detail={
+                                "status": "fail",
+                                "message": f"Jumlah item '{item['name']}' yang ingin dikembalikan melebihi jumlah yang dipesan.",
+                                "timestamp": datetime.now(timezone.utc).isoformat()
+                            }
+                        )
+                    break
+            if not itemMatch:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "status": "fail",
+                        "message": f"Item dengan id '{item['itemId']}' tidak ditemukan dalam order.",
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+                )
+            
+        # complete data in returnItems
+        for item in returnItems:
+            for orderItem in orderItems:
+                if item["name"] == orderItem["name"]:
+                    item["weight"] = orderItem["weight"]
+                    item["unitMetrics"] = orderItem["unitMetrics"]
+                    item["unitPrice"] = orderItem["unitPrice"]
+                    item["total"] = item["quantity"] * item["unitPrice"]
+                    break
+        
+
+        returnItemsList = []
+        for item in returnItems:
+            returnItem = returnItemsModel(
+                unitName=item["name"],
+                weight=item["weight"],
+                quantity=item["quantity"],
+                unitMetrics=item["unitMetrics"],
+                unitPrice= item["unitPrice"],
+                total=item["total"],
+            ) 
+            returnItemsList.append(returnItem.dict())
+
+        totalWeight = sum(item["weight"] * item["quantity"] for item in returnItems)
+        totalPrice = sum(item["total"] for item in returnItems)
+        totalItems = len(returnItems)
+
+        deliveryOrderURL = []
+        for image in listImages : 
+            counter = 1
+            image_file = await image.read()
+            imageSize = len(image_file) / 1024  # Convert to KB
+            maxSize = 1024 * 1024 * 10 # 10 MB
+
+            if imageSize > maxSize:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "status": "fail",
+                        "message": "Ukuran file terlalu besar, maksimal 10MB",
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+                )
+            await image.seek(0)
+
+            filename = f"return_{orderNo}_{counter}"
+            fileExtension = image.filename.split(".")[-1]
+            fullFilename = f"{filename}.{fileExtension}"
+
+            # compressed image
+            compressed_image, output_mime = await compress_image(image_file=image, max_size_kb=1024)  # type: ignore
+
+            imageUrl = await uploadBytesToStorage(
+                bytes=compressed_image,
+                location="return-delivery-order", # folder in storage bucket
+                fileName=fullFilename,
+                content_type=output_mime
+            )
+            deliveryOrderURL.append(imageUrl)
+            counter += 1
+
+        # Update data
+        returnPackageData = packageDeliveryReturnModel(
+            orderNo=orderNo,
+            returnId=str(uuid4()),
+            doImages=deliveryOrderURL,
+            returnDate=datetime.now(timezone.utc),
+            returnedItems=returnItemsList,
+            totalWeight=totalWeight,
+            totalPrice=totalPrice,
+            totalItems=totalItems,
+            reason=reason,
+        ).dict()
+
+        batch = db.batch()
+        
+        # Update packageReturnCollection
+        packageReturnCollectionRef = db.collection("packageReturnCollection").document(orderNoFiltered)
+        batch.set(packageReturnCollectionRef, returnPackageData)
+
+        # Update packageDeliveryCollection, update delivery status to return
+        packageDeliveryCollectionRef = db.collection("packageDeliveryCollection").document(orderNoFiltered)
+        packageDeliveryData = {
+            "deliveryStatus": "Return",
+            "returnTime": datetime.now(timezone.utc),
+            "lastUpdateTime": datetime.now(timezone.utc)
+        }
+        batch.update(packageDeliveryCollectionRef, packageDeliveryData)
+
+        # Commit all changes
+        batch.commit()
+        return {
+            "status": "success",
+            "message": f"Status paket '{orderNo}' berhasil diupdate menjadi 'Return'",
+            "data": returnPackageData
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error during update '{orderNo}': {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Terjadi kesalahan: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
+
+async def getPackageReturnById(orderNo, currentUser):
+    try:
+        # Check if user is admin or driver
+        if currentUser["role"] not in ["admin", "driver"]:    
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "status": "fail",
+                    "message": "Anda tidak memiliki akses untuk mengupdate order.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )   
+        # Validate if the package exists in Firestore's packageDeliveryCollection
+        deliveryReturnDoc = (
+            db.collection("packageReturnCollection")
+            .document(orderNo)
+            .get()
+        )
+        if not deliveryReturnDoc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": f"Paket dengan id '{orderNo}' tidak ditemukan.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        deliveryReturnData = deliveryReturnDoc.to_dict()
+
+        return {
+            "status": "success",
+            "message": f"Berhasil mendapatkan detail pengembalian paket '{orderNo}'",
+            "data": deliveryReturnData
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error during get return delivery detail for '{orderNo}': {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Terjadi kesalahan: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
+        
 async def getPackageDeliveryById(orderNo):
     try:
         orderNo = unquote(orderNo)

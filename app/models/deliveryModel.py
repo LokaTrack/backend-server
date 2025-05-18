@@ -25,6 +25,24 @@ class packageDeliveryModel(BaseModel):
     checkOutTime: Optional[datetime] = None
     lastUpdateTime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
+class returnItemsModel(BaseModel):
+    unitName: str
+    weight: float
+    quantity: int
+    unitMetrics: str
+    unitPrice: float
+    total: float
+
+class packageDeliveryReturnModel(BaseModel):
+    orderNo: str
+    returnId: Optional [str] = None
+    doImages: Optional [list] = None
+    returnDate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    returnedItems: Optional [list] = None
+    totalWeight: Optional [float] = 0
+    totalPrice: Optional [float] = 0
+    totalItems: Optional [int] = 0
+    reason: Optional [str] = None
 
 class updateDeliveryStatusModel(BaseModel):
     orderNo: str
