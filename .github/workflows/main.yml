@@ -28,6 +28,15 @@ jobs:
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF' || DEPLOY_SUCCESS=false
           cd ${{ secrets.MAIN_DIR }}
           git pull origin ${{ secrets.MAIN_BRANCH }}
+
+          # Update dependencies in virtual environment
+          echo "Updating dependencies..."
+          source venv/bin/activate
+          pip install -r requirements.txt 
+          deactivate
+
+          # Restart application
+          echo "Restarting application..."
           sudo supervisorctl restart lokatrack
           
           # Wait a moment for the service to start
