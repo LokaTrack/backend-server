@@ -17,7 +17,7 @@ async def process_gps_data(gps_data: GPSDataModel):
 
         trackerId = gps_data.id
         geopoint = firestore.GeoPoint(gps_data.lat, gps_data.long)
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.fromisoformat(gps_data.timestamp)
 
         locationData = {
             # "location": {
@@ -25,15 +25,15 @@ async def process_gps_data(gps_data: GPSDataModel):
             #     "longitude": gps_data.long
             # },
             "location": geopoint,
-            "lastUpdated": timestamp
+            "lastUpdated": timestamp,
         }
-        
+
         # Update the tracker document in Firestore
         trackerRef = db.collection("trackerCollection").document(trackerId)
-        
+
         # Check if the tracker document exists
         trackerDoc = trackerRef.get()
-        
+
         batch = db.batch()
 
         if trackerDoc.exists:
@@ -47,7 +47,7 @@ async def process_gps_data(gps_data: GPSDataModel):
                 "trackerId": trackerId,
                 "trackerName": f"GPS Tracker {trackerId}",
                 "registrationDate": datetime.now(timezone.utc),
-                **locationData
+                **locationData,
             }
             batch.set(trackerRef, tracker_data)
             # trackerRef.set(tracker_data)
@@ -55,26 +55,22 @@ async def process_gps_data(gps_data: GPSDataModel):
 
         # save location to history
         # Create document with auto-generated ID in history subcollection
-        historyData = {
-            "location": geopoint,
-            "timestamp": timestamp
-            }
-        
+        historyData = {"location": geopoint, "timestamp": timestamp}
+
         historyId = str(uuid7())
 
         # save location to history
         historyRef = trackerRef.collection("locationHistory").document(historyId)
-        # historyRef.set(locationHistory)   
+        # historyRef.set(locationHistory)
         batch.set(historyRef, historyData)
 
         # Commit all changes
         batch.commit()
-          
         return True
-    
     except Exception as e:
         logger.error(f"Error updating tracker location: {str(e)}")
         return False
+
 
 def process_gps_data(gps_data: GPSDataModel):
     """Non-async version for direct use in MQTT callbacks"""
@@ -85,7 +81,7 @@ def process_gps_data(gps_data: GPSDataModel):
 
         trackerId = gps_data.id
         geopoint = firestore.GeoPoint(gps_data.lat, gps_data.long)
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.fromisoformat(gps_data.timestamp)
 
         # Prepare location data for Firestore
         locationData = {
@@ -94,14 +90,14 @@ def process_gps_data(gps_data: GPSDataModel):
             #     "longitude": gps_data.long
             # },
             "location": geopoint,
-            "lastUpdated": timestamp
+            "lastUpdated": timestamp,
         }
-        
+
         # Update the tracker document in Firestore
         trackerRef = db.collection("trackerCollection").document(trackerId)
-        
+
         # Check if the tracker document exists
-        trackerDoc = trackerRef.get()     
+        trackerDoc = trackerRef.get()
 
         # Start a batch write
         batch = db.batch()
@@ -117,30 +113,27 @@ def process_gps_data(gps_data: GPSDataModel):
                 "trackerId": trackerId,
                 "trackerName": f"GPS Tracker {trackerId}",
                 "registrationDate": datetime.now(timezone.utc),
-                **locationData
+                **locationData,
             }
             batch.set(trackerRef, tracker_data)
             # trackerRef.set(tracker_data)
             logger.debug(f"Created new tracker record for {trackerId}")
 
-        historyData = {
-              "location": geopoint,
-              "timestamp": timestamp
-        }
-        
+        historyData = {"location": geopoint, "timestamp": timestamp}
+
         # Generate UUIDv7 (timestamp-based)
         historyId = str(uuid7())
 
         # save location to history
         historyRef = trackerRef.collection("locationHistory").document(historyId)
-        # historyRef.set(locationHistory)   
+        # historyRef.set(locationHistory)
         batch.set(historyRef, historyData)
 
         # Commit all changes
         batch.commit()
 
         return True
-    
+
     except Exception as e:
         logger.error(f"Error updating tracker location: {str(e)}")
         return False

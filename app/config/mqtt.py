@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from app.models.mqttModel import GPSDataModel
 from app.services.mqttService import process_gps_data
 from app.utils.decrypt import decrypt_message
+from app.utils.time import get_ntp_time, get_accurate_time
 
 # Configure logging
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -43,8 +44,9 @@ def on_connect(client, userdata, flags, rc):
 # Callback when a message is received from the server
 def on_message(client, userdata, msg):
     try:
-        logger.debug(f"Received message on topic '{msg.topic}': {msg.payload}")
-        receive_time = datetime.now(timezone.utc)
+        # logger.debug(f"Received message on topic '{msg.topic}': {msg.payload}")
+        # receive_time = get_ntp_time()
+        receive_time = get_accurate_time()
 
         # Decode the message payload
         data = decrypt_message(msg.payload.decode("utf-8"))
@@ -60,19 +62,26 @@ def on_message(client, userdata, msg):
         #   "id": "CC:DB:A7:9B:7A:00",
         #   "lat": -6.2088,
         #   "long": 106.8456
+        #   "timestamp": "2025-05-14T04:44:49.351Z"
         # }
 
         # Jika ada timestamp di pesan, hitung latency
         if "timestamp" in data:
             try:
                 # Parse timestamp dari pesan
-                send_time = datetime.fromisoformat(
-                    data["timestamp"].replace("Z", "+00:00")
+                send_time = datetime.fromisoformat(data["timestamp"])
+                logger.debug(
+                    "---------------------------------------------------------------------------"
                 )
+                logger.debug(f"Current Time\t: {receive_time} ")
+                logger.debug(f"Device time\t\t: {send_time} ")
                 # Hitung latency dalam milidetik
                 latency_ms = (receive_time - send_time).total_seconds() * 1000
                 logger.debug(
-                    f"MQTT Latency: {latency_ms:.2f}ms for message from {data.get('id', 'unknown')}"
+                    f"MQTT Latency\t: {latency_ms:.2f}ms for message from {data.get('id', 'unknown')}"
+                )
+                logger.debug(
+                    "---------------------------------------------------------------------------"
                 )
             except (ValueError, KeyError) as e:
                 logger.warning(f"Could not calculate latency: {e}")

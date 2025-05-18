@@ -100,10 +100,10 @@ def decrypt_message(encrypted_hex_message: str, key=HEX_KEY):
         counter_bytes = encrypted_message[8:16]
         ciphertext = encrypted_message[16:]
 
-        logger.debug(f"IV: {iv.hex()}")
-        logger.debug(f"Counter: {counter_bytes.hex()}")
-        logger.debug(f"Ciphertext: {ciphertext.hex()}")
-        logger.debug(f"Ciphertext length: {len(ciphertext)} bytes")
+        # logger.debug(f"IV: {iv.hex()}")
+        # logger.debug(f"Counter: {counter_bytes.hex()}")
+        # logger.debug(f"Ciphertext: {ciphertext.hex()}")
+        # logger.debug(f"Ciphertext length: {len(ciphertext)} bytes")
 
         # Get the starting counter value as a 64-bit integer
         counter_value = int.from_bytes(counter_bytes, byteorder="little")

@@ -7,14 +7,13 @@ class GPSDataModel(BaseModel):
     lat: float
     long: float
     satellites: Optional[int] = None
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    
+    timestamp: str
     class Config:
         json_schema_extra = {
             "example": {
                 "id": "CC:DB:A7:9B:7A:10",
                 "lat": -11.262273333,
                 "long": 11.0032413,
-                "satellites": 99
+                "satellites": 99,
             }
         }
