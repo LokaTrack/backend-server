@@ -36,7 +36,7 @@ class returnItemsModel(BaseModel):
 class packageDeliveryReturnModel(BaseModel):
     orderNo: str
     returnId: Optional [str] = None
-    doImages: Optional [list] = None
+    deliveryOrderImages: Optional [list] = None
     returnDate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     returnedItems: Optional [list] = None
     totalWeight: Optional [float] = 0

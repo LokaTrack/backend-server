@@ -4,6 +4,7 @@ from app.utils.compress import compress_image
 from app.utils.time import convert_utc_to_wib
 from app.config.firestore import db
 from datetime import datetime, timezone
+from google.cloud.firestore import DELETE_FIELD
 from fastapi import HTTPException
 from urllib.parse import unquote
 from uuid import uuid4
@@ -367,7 +368,7 @@ async def updateDeliveryStatusReturn(listImages, orderNo, returnItems, reason, c
                 )
             await image.seek(0)
 
-            filename = f"return_{orderNo}_{counter}"
+            filename = f"return_{orderNoFiltered}_{counter}"
             fileExtension = image.filename.split(".")[-1]
             fullFilename = f"{filename}.{fileExtension}"
 
@@ -387,7 +388,7 @@ async def updateDeliveryStatusReturn(listImages, orderNo, returnItems, reason, c
         returnPackageData = packageDeliveryReturnModel(
             orderNo=orderNo,
             returnId=str(uuid4()),
-            doImages=deliveryOrderURL,
+            deliveryOrderImages=deliveryOrderURL,
             returnDate=datetime.now(timezone.utc),
             returnedItems=returnItemsList,
             totalWeight=totalWeight,
@@ -405,6 +406,7 @@ async def updateDeliveryStatusReturn(listImages, orderNo, returnItems, reason, c
         # Update packageDeliveryCollection, update delivery status to return
         packageDeliveryCollectionRef = db.collection("packageDeliveryCollection").document(orderNoFiltered)
         packageDeliveryData = {
+            "checkOutTime": DELETE_FIELD,
             "deliveryStatus": "Return",
             "returnTime": datetime.now(timezone.utc),
             "lastUpdateTime": datetime.now(timezone.utc)
@@ -443,10 +445,12 @@ async def getPackageReturnById(orderNo, currentUser):
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )   
+        orderNo = unquote(orderNo)
+        orderNoFiltered = orderNo.replace("/", "_")
         # Validate if the package exists in Firestore's packageDeliveryCollection
         deliveryReturnDoc = (
             db.collection("packageReturnCollection")
-            .document(orderNo)
+            .document(orderNoFiltered)
             .get()
         )
         if not deliveryReturnDoc.exists:
