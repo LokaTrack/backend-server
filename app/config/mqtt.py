@@ -106,8 +106,14 @@ def on_message(client, userdata, msg):
         # Jika ada timestamp di pesan, hitung latency
         if "timestamp" in data:
             try:
+                if data["timestamp"].endswith('Z'):
+                # Replace Z with +00:00 (UTC)
+                    send_time = datetime.fromisoformat(data["timestamp"].replace('Z', '+00:00'))
+                else:
+                    send_time = datetime.fromisoformat(data["timestamp"])
+
                 # Parse timestamp dari pesan
-                send_time = datetime.fromisoformat(data["timestamp"])
+                # send_time = datetime.fromisoformat(data["timestamp"])
                 logger.debug(
                     "---------------------------------------------------------------------------"
                 )
