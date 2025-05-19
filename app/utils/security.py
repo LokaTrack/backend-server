@@ -5,9 +5,18 @@ import jwt
 from typing import Optional
 import os
 from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
+
+# JWT settings
+ACCESS_TOKEN_EXPIRED_DAYS = os.getenv("ACCESS_TOKEN_EXPIRED_DAYS", "30")  # Default to 30 days if not set
+ALGORITHM = os.getenv("ALGORITHM", "HS256")  # Default to HS256 if not set
+SECRET_KEY = os.getenv("SECRET_KEY")
+
 # Password hashing
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -32,9 +41,9 @@ def createAccessToken(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.utcnow() + expires_delta
     else:
         # data from .env always in string format
-        expired_days = int(os.getenv("ACCESS_TOKEN_EXPIRED_DAYS", "30"))  # Default to 30 days if not set
+        expired_days = int(ACCESS_TOKEN_EXPIRED_DAYS) 
         expire = datetime.utcnow() + timedelta(days=expired_days)
-    
+
     issuer = os.getenv("APP_DOMAIN") or "lokatrack"
     dataToEncode = {
         "userId": data["userId"],
@@ -42,22 +51,23 @@ def createAccessToken(data: dict, expires_delta: Optional[timedelta] = None):
         "role": data["role"],
         "username": data["username"],
         "exp": expire,
-        "iss": issuer
+        "iss": issuer,
     }
 
-    encoded_jwt = jwt.encode(dataToEncode, os.getenv("SECRET_KEY"), os.getenv("ALGORITHM"))
+    encoded_jwt = jwt.encode(
+        dataToEncode, 
+        SECRET_KEY,
+        ALGORITHM)
     return encoded_jwt
 
 def verifyAccessToken(token: str):
     """Verify the JWT access token"""
     try:
         payload = jwt.decode(
-            token,
-            os.getenv("SECRET_KEY"),
-            algorithms=[os.getenv("ALGORITHM")]
+            token, SECRET_KEY, ALGORITHM
         )
         return payload  # Return the decoded payload if valid
-    
+
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -74,8 +84,8 @@ def verifyAccessToken(token: str):
             detail={
                 "status": "fail",
                 "message": "Token tidak valid",
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            }
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
         )
     except Exception as e:
         raise HTTPException(
@@ -93,3 +103,18 @@ def verifyAccessToken(token: str):
     #         detail="Token tidak valid atau telah kedaluwarsa",
     #         headers={"WWW-Authenticate": "Bearer"},
     #     )
+
+
+async def get_ws_user(token: str):
+    """Authenticate WebSocket connections using JWT token"""
+    try:
+        # Decode token
+        payload = jwt.decode(
+            token, SECRET_KEY, ALGORITHM
+        )
+
+        return payload
+
+    except Exception as e:
+        logger.error(f"Error authenticating WebSocket user: {str(e)}")
+        return f"Error authenticating user"
