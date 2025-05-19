@@ -1,6 +1,5 @@
 import socketio
 import logging
-from app.models.sioModel import SocketModel, SocketLocationModel
 
 logger = logging.getLogger(__name__)
 
