@@ -3,12 +3,50 @@ import json
 import os
 import ssl
 import paho.mqtt.client as mqtt
+import asyncio
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from app.models.mqttModel import GPSDataModel
 from app.services.mqttService import process_gps_data
 from app.utils.decrypt import decrypt_message
 from app.utils.time import get_ntp_time, get_accurate_time
+
+# Global variable to store socketio instance
+socketio_instance = None
+
+def set_socketio(sio):
+    """Set the Socket.IO instance to be used by MQTT module"""
+    global socketio_instance
+    socketio_instance = sio
+    
+# Helper function to run async emit in background
+def emit_socketio_event(event, data):
+    """Run socketio emit in an async context"""
+    if not socketio_instance:
+        logger.warning("Socket.IO not initialized, can't emit event")
+        return
+        
+    # Create a new event loop for this thread if needed
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    
+    # Create a coroutine to emit the event
+    async def _emit():
+        try:
+            await socketio_instance.emit(event, data)
+        except Exception as e:
+            logger.error(f"Error emitting Socket.IO event: {str(e)}")
+    
+    # Run the coroutine in the event loop
+    if loop.is_running():
+        # If the loop is already running, we need to use create_task
+        asyncio.run_coroutine_threadsafe(_emit(), loop)
+    else:
+        # Otherwise, we can just run it directly
+        loop.run_until_complete(_emit())
 
 # Configure logging
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -84,10 +122,22 @@ def on_message(client, userdata, msg):
                     "---------------------------------------------------------------------------"
                 )
             except (ValueError, KeyError) as e:
-                logger.warning(f"Could not calculate latency: {e}")
-
-        # Create model instance, validate data
+                logger.warning(f"Could not calculate latency: {e}")        # Create model instance, validate data
         gps_data = GPSDataModel(**data)
+
+        # send via web socket
+        # sio.emit("tracker:location_update", gps_data.dict(), room=gps_data.trackerId)
+        websocket_data = {
+            "trackerId": gps_data.id,
+            "location": {
+                "latitude": gps_data.lat,
+                "longitude": gps_data.long,
+            },
+            "timestamp": gps_data.timestamp,
+        }
+
+        # Use the global socketio instance via our helper function
+        emit_socketio_event("tracker:location_update", websocket_data)
 
         # Process the GPS data (update Firestore)
         process_gps_data(gps_data)

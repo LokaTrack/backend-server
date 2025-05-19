@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone
+
 
 class GPSDataModel(BaseModel):
     id: str
@@ -8,6 +9,7 @@ class GPSDataModel(BaseModel):
     long: float
     satellites: Optional[int] = None
     timestamp: str
+
     class Config:
         json_schema_extra = {
             "example": {
