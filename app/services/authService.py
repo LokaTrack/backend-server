@@ -372,8 +372,8 @@ async def resetPassword (userDataInput) :
         db.collection("userCollection").document(userId).update({
             "hashedPassword": newPasswordHash,
             # Remove OTP and timestamp after successful reset
-            "otp": None,
-            "otpTimestamp": None,
+            "otp": DELETE_FIELD,
+            "otpTimestamp": DELETE_FIELD,
             "lastUpdate": datetime.now(timezone.utc)
         })
 

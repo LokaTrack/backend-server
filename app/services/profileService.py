@@ -6,7 +6,7 @@ from app.utils.emailVerification import sendVerificationEmail
 from app.utils.compress import compress_image
 from fastapi import HTTPException
 from datetime import datetime, timezone
-from google.cloud.firestore import FieldFilter
+from google.cloud.firestore import FieldFilter, DELETE_FIELD
 import logging
 logger = logging.getLogger(__name__)
 
@@ -59,6 +59,7 @@ async def getUserProfile(currentUser):
         })    
         return {
             "status": "success",
+            "message": "Berhasil mendapatkan profile",
             "data": userData
         }
     except HTTPException:
