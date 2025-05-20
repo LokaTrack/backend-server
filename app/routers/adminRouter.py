@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from typing import List, Optional, Dict, Any
 from app.services.adminService import (
     getAllUsers,    
-    assign_tracker,
+    assign_tracker_service,
     get_all_delivery_packages_service,
     get_admin_dashboard_service,
     getGPSData,
@@ -42,8 +42,7 @@ async def get_admin_dashboard(
 
 @router.get("/users", status_code=200)
 async def get_all_users(
-    role: Optional[str] = Query(None, description="Filter by user role (admin/driver)"),
-    status: Optional[str] = Query(None, description="Filter by user status (active/inactive)"),
+    role: Optional[str] = Query(None, description="Filter by user role (pending, inactive, admin/driver)"),
     email_verified: Optional[bool] = Query(None, description="Filter by email verification status"),
     search: Optional[str] = Query(None, description="Search by username or email"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of users to return"),
@@ -54,7 +53,6 @@ async def get_all_users(
     try:
         result = await getAllUsers(
             role=role,
-            status=status,
             email_verified=email_verified,
             search=search,
             limit=limit,
@@ -75,7 +73,7 @@ async def assign_tracker(
 ):
     """Assign a tracker to a user"""
     try:
-        result = await assign_tracker(currentUser, userId, trackerId)
+        result = await assign_tracker_service(userId, trackerId, currentUser)
         return result
     except HTTPException as e:
         return JSONResponse(

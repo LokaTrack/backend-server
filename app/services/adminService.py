@@ -4,7 +4,7 @@ from app.config.firestore import db
 from fastapi import HTTPException
 from datetime import datetime, timezone, timedelta
 from app.utils.time import convert_utc_to_wib
-from google.cloud.firestore import FieldFilter
+from google.cloud.firestore import FieldFilter, DELETE_FIELD
 import logging
 from fastapi import Query
 from app.config.sqlite import get_recent_gps_data
@@ -12,61 +12,61 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-async def getAllUsers(currentUser):
-    try : 
-        # Check if user is admin
-        if currentUser["role"] not in ["admin"]:
-            raise HTTPException(
-                status_code=403,
-                detail={
-                    "status": "fail",
-                    "message": "Anda tidak memiliki akses untuk melihat user!",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-            )
+# async def getAllUsers(currentUser):
+#     try : 
+#         # Check if user is admin
+#         if currentUser["role"] not in ["admin"]:
+#             raise HTTPException(
+#                 status_code=403,
+#                 detail={
+#                     "status": "fail",
+#                     "message": "Anda tidak memiliki akses untuk melihat user!",
+#                     "timestamp": datetime.now(timezone.utc).isoformat()
+#                 }
+#             )
         
-        # Get all users from firestore
-        usersDoc = (
-            db.collection("userCollection")
-            .where(filter=FieldFilter("isEmailVerified", "==", True))
-            .stream()
-        )
-        usersList = []
-        adminList = []
-        driverList = []
-        # usersList = {
-        #     "userId": "3e02b584-0b6b-4a3e-b20b-0882999bce71",
-        #     "userData": {
-        #         "name": "Dummy User",
-        #         "email": "dfada@gmail.com"
-        #     }
-        # }
-        for user in usersDoc:
-            userData = user.to_dict()
-            userData.pop("hashedPassword", None)  # Remove password from user data
-            data = {
-                "userId:" : userData.get("userId"),
-                "userData": userData
-            }
-            usersList.append(data)
+#         # Get all users from firestore
+#         usersDoc = (
+#             db.collection("userCollection")
+#             .where(filter=FieldFilter("isEmailVerified", "==", True))
+#             .stream()
+#         )
+#         usersList = []
+#         adminList = []
+#         driverList = []
+#         # usersList = {
+#         #     "userId": "3e02b584-0b6b-4a3e-b20b-0882999bce71",
+#         #     "userData": {
+#         #         "name": "Dummy User",
+#         #         "email": "dfada@gmail.com"
+#         #     }
+#         # }
+#         for user in usersDoc:
+#             userData = user.to_dict()
+#             userData.pop("hashedPassword", None)  # Remove password from user data
+#             data = {
+#                 "userId:" : userData.get("userId"),
+#                 "userData": userData
+#             }
+#             usersList.append(data)
 
-        return {
-            "status": "success",
-            "message": "Success get data users!",
-            "data": usersList,
-        }
+#         return {
+#             "status": "success",
+#             "message": "Success get data users!",
+#             "data": usersList,
+#         }
     
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error while resetting password: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "status": "fail",
-                "message": f"Terjadi kesalahan pada server: {str(e)}",
-                "timestamp": datetime.now(timezone.utc)().isoformat(),
-            })
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         logger.error(f"Error while resetting password: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail={
+#                 "status": "fail",
+#                 "message": f"Terjadi kesalahan pada server: {str(e)}",
+#                 "timestamp": datetime.now(timezone.utc).isoformat(),
+#             })
     
 
 async def get_admin_dashboard_service(currentUser):
@@ -157,7 +157,7 @@ async def get_admin_dashboard_service(currentUser):
             }
         )
 
-async def getAllUsers(role=None, status=None, email_verified=None, search=None, limit=100, offset=0):
+async def getAllUsers(role=None, email_verified=None, search=None, limit=100, offset=0):
     """Get all users with optional filtering"""
     try:
         # Base query
@@ -166,9 +166,6 @@ async def getAllUsers(role=None, status=None, email_verified=None, search=None, 
         # Apply filters
         if role:
             query = query.where(filter=FieldFilter("role", "==", role))
-        
-        if status:
-            query = query.where(filter=FieldFilter("status", "==", status))
         
         if email_verified is not None:
             query = query.where(filter=FieldFilter("isEmailVerified", "==", email_verified))
@@ -248,7 +245,7 @@ async def getAllUsers(role=None, status=None, email_verified=None, search=None, 
             }
         )
 
-async def assign_tracker(currentUser, userId, trackerId):
+async def assign_tracker_service(userId, trackerId, currentUser):
     """Assign a tracker to a user"""
     try:
         # Check if user is admin
@@ -264,6 +261,7 @@ async def assign_tracker(currentUser, userId, trackerId):
 
         # Check if user exists
         user_doc = db.collection("userCollection").document(userId).get()
+        user_data = user_doc.to_dict()
         if not user_doc.exists:
             raise HTTPException(
                 status_code=404,
@@ -274,6 +272,31 @@ async def assign_tracker(currentUser, userId, trackerId):
                 }
             )
         
+        if trackerId == "null":
+            if not user_data.get("trackerId"):
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "status": "fail",
+                        "message": f"User '{user_data.get('username')}' tidak memiliki tracker yang ditetapkan",
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+                )
+            
+            # Remove trackerId from user
+            db.collection("userCollection").document(userId).update({
+                "trackerId": DELETE_FIELD,
+                "lastUpdate": datetime.now(timezone.utc)
+            })
+            return {
+                "status": "success",
+                "message": f"Tracker berhasil dihapus dari user '{user_doc.get('username')}'",
+                "data": {
+                    "userId": userId,
+                    "username": user_doc.get("username")
+                }
+            }
+
         # Check if tracker exists
         tracker_doc = db.collection("trackerCollection").document(trackerId).get()
         if not tracker_doc.exists:
@@ -304,7 +327,6 @@ async def assign_tracker(currentUser, userId, trackerId):
                 )
         
         # Update user with tracker ID
-        user_data = user_doc.to_dict()
         db.collection("userCollection").document(userId).update({
             "trackerId": trackerId,
             "lastUpdate": datetime.now(timezone.utc)
