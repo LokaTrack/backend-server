@@ -11,6 +11,7 @@ from app.routers import (
     testRouter,
     trackerRouter,
     ocrRouter,
+    adminRouter
 )
 from app.config.mqtt import start_mqtt_client, stop_mqtt_client, clear_retained_messages, set_socketio
 from fastapi.exceptions import RequestValidationError
@@ -63,6 +64,7 @@ app.include_router(userRouter.router)
 app.include_router(trackerRouter.router)
 app.include_router(testRouter.router)
 app.include_router(ocrRouter.router)
+app.include_router(adminRouter.router)
 
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
