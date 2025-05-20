@@ -27,7 +27,32 @@ jobs:
         DEPLOY_SUCCESS=true
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF' || DEPLOY_SUCCESS=false
           cd ${{ secrets.MAIN_DIR }}
+
+          # Save hash requirements.txt
+          echo "Saving hash requirements.txt..."
+          if [ -f requirements.txt ]; then
+            OLD_HASH=$(md5sum requirements.txt | awk '{ print $1 }')
+          else
+            OLD_HASH=""
+          fi
+
           git pull origin ${{ secrets.MAIN_BRANCH }}
+
+          # Check if requirements.txt has changed
+          echo "Checking for changes in requirements.txt..."
+          if [ -f requirements.txt ]; then
+            NEW_HASH=$(md5sum requirements.txt | awk '{ print $1 }')
+
+            if [ "$OLD_HASH" != "$NEW_HASH" ] || [ -z "$OLD_HASH" ]; then
+              echo "Dependencies changed, updating..."
+              source venv/bin/activate
+              pip install -r requirements.txt 
+              deactivate
+            
+            else
+              echo "No changes in requirements.txt, skipping dependency installation"
+            fi
+          fi
 
           # Update dependencies in virtual environment
           echo "Updating dependencies..."
