@@ -41,7 +41,7 @@ async def getTrackerLocation(trackerId, currentUser):
             "trackerId": trackerData.get("trackerId"),
             "trackerName": trackerData.get("trackerName"),
             "location": trackerData.get("location"),
-            "lastUpdate": trackerData.get("lastUpdated"),
+            "lastUpdate": trackerData.get("lastUpdate"),
             "registrationDate": trackerData.get("registrationDate"),        
         }
         
@@ -183,12 +183,21 @@ async def getAllTracker(currentUser):
         # Get all trackers
         trackers_docs = db.collection("trackerCollection").stream()
         
-        trackers = [doc.to_dict() for doc in trackers_docs]
+        trackerList = []
+        # trackers = [doc.to_dict() for doc in trackers_docs]
+        for tracker in trackers_docs: 
+            trackerDict = tracker.to_dict()
+            trackerData = {
+                "trakcerId" : trackerDict.get("trackerId"),
+                "trackerData" : trackerDict
+            }
+            
+            trackerList.append(trackerData)
         
         return {
             "status": "success",
             "message": "Berhasil mendapatkan data semua tracker",
-            "data": trackers
+            "data": trackerList
         }
         
     except HTTPException:
