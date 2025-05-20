@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from typing import List
-from app.services.ocrService import getItemsData, getOrderNo, getReturnItems
+from app.services.ocrService import getItemsData, getOrderNo, getReturnItems, scanBarcode
 
 
 # Assuming you might want to protect these endpoints later
@@ -42,6 +42,18 @@ async def get_return_items_only(images: List[UploadFile] = File(...)):
     """Uploads one or more image files and extracts return item data using OCR."""
     try:
         result = await getReturnItems(images)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+        )
+    
+@router.post("/scan-barcode")
+async def scan_barcode(image: UploadFile = File(...)):
+    """Uploads an image file and scans it for QR codes or barcodes."""
+    try:
+        result = await scanBarcode(image)
         return result
     except HTTPException as e:
         return JSONResponse(

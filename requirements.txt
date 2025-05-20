@@ -17,4 +17,8 @@ uuid_utils==0.10.0
 pytesseract==0.3.13
 pycryptodome==3.22.0
 ntplib==0.4.0
-python-socketio
+python-socketio==5.13.0
+opencv-python==4.11.0.86
+numpy==2.2.5
+beautifulsoup4==4.13.4
+
