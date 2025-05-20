@@ -188,7 +188,7 @@ async def getAllTracker(currentUser):
         for tracker in trackers_docs: 
             trackerDict = tracker.to_dict()
             trackerData = {
-                "trakcerId" : trackerDict.get("trackerId"),
+                "trackerId" : trackerDict.get("trackerId"),
                 "trackerData" : trackerDict
             }
             
