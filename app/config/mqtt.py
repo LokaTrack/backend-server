@@ -10,6 +10,7 @@ from app.models.mqttModel import GPSDataModel
 from app.services.mqttService import process_gps_data
 from app.utils.decrypt import decrypt_message
 from app.utils.time import get_ntp_time, get_accurate_time
+from app.config.sqlite import store_gps_data
 
 # Global variable to store socketio instance
 socketio_instance = None
@@ -103,6 +104,9 @@ def on_message(client, userdata, msg):
         #   "timestamp": "2025-05-14T04:44:49.351Z"
         # }
 
+        latency_ms = None
+        send_time = None
+
         # Jika ada timestamp di pesan, hitung latency
         if "timestamp" in data:
             try:
@@ -122,11 +126,20 @@ def on_message(client, userdata, msg):
                     "---------------------------------------------------------------------------"
                 )
             except (ValueError, KeyError) as e:
-                logger.warning(f"Could not calculate latency: {e}")        # Create model instance, validate data
-        gps_data = GPSDataModel(**data)
+                logger.warning(f"Could not calculate latency: {e}")  
 
         # send via web socket
         # sio.emit("tracker:location_update", gps_data.dict(), room=gps_data.trackerId)
+        store_gps_data(
+            tracker_id=data.get("id"),
+            latitude=data.get("lat"),
+            longitude=data.get("long"),
+            receive_time=receive_time,
+            send_time=send_time,
+            latency_ms=latency_ms
+        )
+        gps_data = GPSDataModel(**data)
+
         websocket_data = {
             "trackerId": gps_data.id,
             "location": {
@@ -135,7 +148,6 @@ def on_message(client, userdata, msg):
             },
             "timestamp": gps_data.timestamp,
         }
-
         # Use the global socketio instance via our helper function
         emit_socketio_event("tracker:location_update", websocket_data)
 
@@ -143,9 +155,43 @@ def on_message(client, userdata, msg):
         process_gps_data(gps_data)
         # For demonstration, we will just log the data
 
+    # except Exception as e:
+    #     logger.error(f"Error processing MQTT message: {str(e)}")
     except Exception as e:
-        logger.error(f"Error processing MQTT message: {str(e)}")
-
+        # Get exception type name
+        error_type = type(e).__name__
+        
+        # Handle different types of errors differently
+        if "ValidationError" in error_type:
+            # For Pydantic validation errors, show exactly which fields failed
+            error_details = str(e).split("\n")[1:3]  # Take just the key parts
+            logger.error(f"MQTT data validation failed: {' | '.join(error_details)}")
+            
+            # Log the received data for debugging (optional)
+            try:
+                logger.debug(f"Invalid data received from tracker: {data.get('id', 'unknown')}")
+            except:
+                pass
+                
+        elif "KeyError" in error_type:
+            # For missing keys
+            logger.error(f"Missing required field in MQTT message: {str(e)}")
+            
+        elif "JSONDecodeError" in error_type:
+            # For JSON parsing errors
+            logger.error(f"Invalid JSON format in MQTT message")
+            
+        elif "AttributeError" in error_type:
+            # For attribute errors (typically when trying to access attributes of None)
+            logger.error(f"MQTT processing error: Unexpected data structure")
+            
+        else:
+            # For other errors, provide a cleaner message
+            logger.error(f"MQTT processing error ({error_type}): {str(e)[:100]}")
+        
+        # For debugging, you can log the full error to debug level
+        logger.debug(f"Full error details: {str(e)}")
+    
 
 # Callback when client disconnects
 def on_disconnect(client, userdata, rc):
