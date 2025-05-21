@@ -3,7 +3,7 @@ from app.utils.auth import get_current_user
 from fastapi.responses import JSONResponse
 from typing import List, Optional, Dict, Any
 from app.services.adminService import (
-    getAllUsers,    
+    getAllUsers,
     assign_tracker_service,
     get_all_delivery_packages_service,
     get_admin_dashboard_service,
@@ -65,10 +65,10 @@ async def get_all_users(
             content=e.detail
         )
 
-@router.put("/users/{userId}/tracker", status_code=200)
+@router.put("/trackers/{trackerId}", status_code=200)
 async def assign_tracker(
-    userId: str = Path(..., description="User ID to assign tracker to"),
-    trackerId: str = Body(..., embed=True, description="Tracker ID to assign"),
+    userId: str = Body(..., embed=True,description="User ID to assign tracker to"),
+    trackerId: str = Path(..., description="Tracker ID to assign"),
     currentUser: dict = Depends(get_current_user)
 ):
     """Assign a tracker to a user"""
@@ -108,8 +108,6 @@ async def get_all_deliveries(
             content=e.detail
         )
 
-
-# Add these endpoints
 @router.get("/gps-data", status_code=200)
 async def get_gps_data(
     trackerId: Optional[str] = Query(None, description="Filter by tracker ID"),
