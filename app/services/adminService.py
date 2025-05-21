@@ -245,8 +245,118 @@ async def getAllUsers(role=None, email_verified=None, search=None, limit=100, of
             }
         )
 
-async def assign_tracker_service(userId, trackerId, currentUser):
-    """Assign a tracker to a user"""
+# async def assign_tracker_service(userId, trackerId, currentUser):
+#     """Assign a tracker to a user"""
+#     try:
+#         # Check if user is admin
+#         if currentUser["role"] not in ["admin"]:
+#             raise HTTPException(
+#                 status_code=403,
+#                 detail={
+#                     "status": "fail",
+#                     "message": "Anda tidak memiliki akses!",
+#                     "timestamp": datetime.now(timezone.utc).isoformat()
+#                 }
+#             )
+
+#         # Check if user exists
+#         user_doc = db.collection("userCollection").document(userId).get()
+#         user_data = user_doc.to_dict()
+#         if not user_doc.exists:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail={
+#                     "status": "fail",
+#                     "message": f"User dengan ID '{userId}' tidak ditemukan",
+#                     "timestamp": datetime.now(timezone.utc).isoformat()
+#                 }
+#             )
+        
+#         if trackerId == "null":
+#             if not user_data.get("trackerId"):
+#                 raise HTTPException(
+#                     status_code=400,
+#                     detail={
+#                         "status": "fail",
+#                         "message": f"User '{user_data.get('username')}' tidak memiliki tracker yang ditetapkan",
+#                         "timestamp": datetime.now(timezone.utc).isoformat()
+#                     }
+#                 )
+            
+#             # Remove trackerId from user
+#             db.collection("userCollection").document(userId).update({
+#                 "trackerId": DELETE_FIELD,
+#                 "lastUpdate": datetime.now(timezone.utc)
+#             })
+#             return {
+#                 "status": "success",
+#                 "message": f"Tracker berhasil dihapus dari user '{user_doc.get('username')}'",
+#                 "data": {
+#                     "userId": userId,
+#                     "username": user_doc.get("username")
+#                 }
+#             }
+
+#         # Check if tracker exists
+#         tracker_doc = db.collection("trackerCollection").document(trackerId).get()
+#         if not tracker_doc.exists:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail={
+#                     "status": "fail",
+#                     "message": f"Tracker dengan ID '{trackerId}' tidak ditemukan",
+#                     "timestamp": datetime.now(timezone.utc).isoformat()
+#                 }
+#             )
+        
+#         # Check if tracker is already assigned to another user
+#         users_with_tracker = list(db.collection("userCollection")
+#                                  .where(filter=FieldFilter("trackerId", "==", trackerId))
+#                                  .stream())
+        
+#         for doc in users_with_tracker:
+#             if doc.id != userId:
+#                 user_data = doc.to_dict()
+#                 raise HTTPException(
+#                     status_code=409,
+#                     detail={
+#                         "status": "fail",
+#                         "message": f"Tracker sudah digunakan oleh user '{user_data.get('username')}' (ID: {doc.id})",
+#                         "timestamp": datetime.now(timezone.utc).isoformat()
+#                     }
+#                 )
+        
+#         # Update user with tracker ID
+#         db.collection("userCollection").document(userId).update({
+#             "trackerId": trackerId,
+#             "lastUpdate": datetime.now(timezone.utc)
+#         })
+        
+#         return {
+#             "status": "success",
+#             "message": f"Tracker berhasil ditetapkan kepada user '{user_data.get('username')}'",
+#             "data": {
+#                 "userId": userId,
+#                 "username": user_data.get("username"),
+#                 "trackerId": trackerId,
+#                 "assignedAt": convert_utc_to_wib(datetime.now(timezone.utc)).isoformat()
+#             }
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         logger.error(f"Error assigning tracker: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail={
+#                 "status": "fail",
+#                 "message": f"Terjadi kesalahan: {str(e)}",
+#                 "timestamp": datetime.now(timezone.utc).isoformat()
+#             }
+#         )
+
+async def assign_tracker_service (userId, trackerId, currentUser):
+    """Assign a tracker to a user 2"""
     try:
         # Check if user is admin
         if currentUser["role"] not in ["admin"]:
@@ -258,10 +368,64 @@ async def assign_tracker_service(userId, trackerId, currentUser):
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
+        # check if tracker exist
+        trackerDoc =  (
+            db.collection("trackerCollection")
+            .document(trackerId)
+            .get()
+        )
+        if not trackerDoc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": f"Tracker dengan ID '{trackerId}' tidak ditemukan",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        
+        # Case: userId is 'null' - Remove tracker from any assigned user
+        if userId == "null":
+            # Find users with this tracker
+            users_with_tracker = list(db.collection("userCollection")
+                                    .where(filter=FieldFilter("trackerId", "==", trackerId))
+                                    .stream())
+            
+            if not users_with_tracker:
+                return {
+                    "status": "success",
+                    "message": f"Tracker '{trackerId}' tidak terhubung dengan user manapun",
+                    "data": {
+                        "trackerId": trackerId
+                    }
+                }
+            
+            # Remove tracker from all users that have it (should be only one, but just to be safe)
+            username = [] 
+            for user_doc in users_with_tracker:
+                user_data = user_doc.to_dict()
+                db.collection("userCollection").document(user_doc.id).update({
+                    "trackerId": DELETE_FIELD,
+                    "lastUpdate": datetime.now(timezone.utc)
+                })
+                username.append(user_data.get("username"))
+                logger.info(f"Removed tracker {trackerId} from user {user_doc.id}")
+            
+            return {
+                "status": "success",
+                "message": f"Tracker berhasil dihapus dari {len(users_with_tracker)} user",
+                "data": {
+                    "trackerId": trackerId,
+                    "unassignedAt": convert_utc_to_wib(datetime.now(timezone.utc)).isoformat(),
+                    "usernames": username
 
+                }
+            }
+        
+
+        # Case: Regular assignment - Assign tracker to specified user
         # Check if user exists
         user_doc = db.collection("userCollection").document(userId).get()
-        user_data = user_doc.to_dict()
         if not user_doc.exists:
             raise HTTPException(
                 status_code=404,
@@ -272,59 +436,47 @@ async def assign_tracker_service(userId, trackerId, currentUser):
                 }
             )
         
-        if trackerId == "null":
-            if not user_data.get("trackerId"):
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "status": "fail",
-                        "message": f"User '{user_data.get('username')}' tidak memiliki tracker yang ditetapkan",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
-                )
-            
-            # Remove trackerId from user
-            db.collection("userCollection").document(userId).update({
-                "trackerId": DELETE_FIELD,
-                "lastUpdate": datetime.now(timezone.utc)
-            })
-            return {
-                "status": "success",
-                "message": f"Tracker berhasil dihapus dari user '{user_doc.get('username')}'",
-                "data": {
-                    "userId": userId,
-                    "username": user_doc.get("username")
-                }
-            }
-
-        # Check if tracker exists
-        tracker_doc = db.collection("trackerCollection").document(trackerId).get()
-        if not tracker_doc.exists:
-            raise HTTPException(
-                status_code=404,
-                detail={
-                    "status": "fail",
-                    "message": f"Tracker dengan ID '{trackerId}' tidak ditemukan",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-            )
+        user_data = user_doc.to_dict()
         
         # Check if tracker is already assigned to another user
         users_with_tracker = list(db.collection("userCollection")
-                                 .where(filter=FieldFilter("trackerId", "==", trackerId))
-                                 .stream())
+                                .where(filter=FieldFilter("trackerId", "==", trackerId))
+                                .stream())
         
         for doc in users_with_tracker:
-            if doc.id != userId:
-                user_data = doc.to_dict()
+            if doc.id != userId:  # If tracker is assigned to another user, not this one
+                other_user_data = doc.to_dict()
                 raise HTTPException(
                     status_code=409,
                     detail={
                         "status": "fail",
-                        "message": f"Tracker sudah digunakan oleh user '{user_data.get('username')}' (ID: {doc.id})",
+                        "message": f"Tracker sudah digunakan oleh user '{other_user_data.get('username')}' (ID: {doc.id})",
                         "timestamp": datetime.now(timezone.utc).isoformat()
                     }
                 )
+        
+        # If this user already has this tracker, just return success
+        if user_data.get("trackerId") == trackerId:
+            return {
+                "status": "success",
+                "message": f"Tracker '{trackerId}' sudah terhubung dengan user '{user_data.get('username')}'",
+                "data": {
+                    "userId": userId,
+                    "username": user_data.get("username"),
+                    "trackerId": trackerId
+                }
+            }
+            
+        # # Check if user already has a different tracker
+        # if user_data.get("trackerId") and user_data.get("trackerId") != trackerId:
+        #     raise HTTPException(
+        #         status_code=409,
+        #         detail={
+        #             "status": "fail",
+        #             "message": f"User '{user_data.get('username')}' sudah memiliki tracker lain (ID: {user_data.get('trackerId')})",
+        #             "timestamp": datetime.now(timezone.utc).isoformat()
+        #         }
+        #     )
         
         # Update user with tracker ID
         db.collection("userCollection").document(userId).update({
