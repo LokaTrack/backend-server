@@ -216,7 +216,7 @@ async def getAllUsers(role=None, email_verified=None, search=None, limit=100, of
                 user_data["lastUpdate"] = convert_utc_to_wib(user_data["lastUpdate"]).isoformat()
 
             data = {
-                "userId:" : user_data.get("userId"),
+                "userId" : user_data.get("userId"),
                 "userData": user_data
             }
             users.append(data)
