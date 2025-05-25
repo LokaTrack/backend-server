@@ -235,7 +235,6 @@ async def convertLokataniToPackageModel(lokataniData):
                 quantity=quantity,
                 unitPrice=unit_price,
                 total=total,
-                notes="",  # notes are not provided in Lokatani data
                 weight=weight_per_unit,
                 type=type,
                 unitMetrics=unit_metrics

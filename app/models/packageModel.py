@@ -9,7 +9,6 @@ class orderItemModel(BaseModel):
     quantity: float
     unitPrice: float
     total: float
-    notes: Optional[str] = ""
     weight: float = 0.0  
     unitMetrics: str  
     type: str   # Type of product, e.g., "HYDROPONIC", "ORGANIC", etc.
