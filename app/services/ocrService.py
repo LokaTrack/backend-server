@@ -71,7 +71,7 @@ async def getOrderNo (imageFile):
         orderNoMatch = re.search(r'(OB/\d{2}-\d{4}/\d{3})', text)
         
         if orderNoMatch:
-            extracted_order_no = orderNoMatch.group(1)
+            extractedOrderNo = orderNoMatch.group(1)
         else:
             extractedOrderNo = "Not found"
 
