@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, HTTPException
+from contextlib import asynccontextmanager
 from app.config.logging import configure_logging
 from fastapi import FastAPI, HTTPException
 from app.routers import (
@@ -34,10 +35,28 @@ from app.utils.error import (
 log_level = os.getenv("LOG_LEVEL", "INFO")
 configure_logging(log_level)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle events"""
+    # Startup
+    logger.info("Starting up application...")
+    # Start the MQTT client
+    start_mqtt_client()
+    # Clear retained messages
+    clear_retained_messages()
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down application...")
+    # Stop the MQTT client
+    stop_mqtt_client()
+
 app = FastAPI(
     title="Lokatani GPS Tracking API",
     docs_url="/api/v1/lokatrack/dokumentasi",
     openapi_url="/api/v1/lokatrack/openapi.json",
+    lifespan=lifespan
 )
 
 # Create an ASGI app by wrapping the FastAPI app with SocketIO
@@ -78,20 +97,20 @@ async def root():
     return {"status": "success", "message": "Selamat datang di LokaTrack API"}
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Start MQTT client onN application startup"""
-    # Start the MQTT client
-    start_mqtt_client()
-    # Clear retained messages
-    clear_retained_messages()
+# @app.on_event("startup")
+# async def startup_event():
+#     """Start MQTT client onN application startup"""
+#     # Start the MQTT client
+#     start_mqtt_client()
+#     # Clear retained messages
+#     clear_retained_messages()
 
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Stop MQTT client on application shutdown"""
-    # Stop the MQTT client
-    stop_mqtt_client()
+# @app.on_event("shutdown")
+# async def shutdown_event():
+#     """Stop MQTT client on application shutdown"""
+#     # Stop the MQTT client
+#     stop_mqtt_client()
 
 
 if __name__ == "__main__":

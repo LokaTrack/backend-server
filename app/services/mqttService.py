@@ -83,6 +83,15 @@ def process_gps_data(gps_data: GPSDataModel):
         geopoint = firestore.GeoPoint(gps_data.lat, gps_data.long)
         timestamp = datetime.fromisoformat(gps_data.timestamp)
 
+        # Handle timestamp with 'Z' suffix properly
+        timestamp_str = gps_data.timestamp
+        if timestamp_str.endswith('Z'):
+            # Replace Z with +00:00 (UTC)
+            timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        else:
+            timestamp = datetime.fromisoformat(timestamp_str)
+
+
         # Prepare location data for Firestore
         locationData = {
             # "location": {
