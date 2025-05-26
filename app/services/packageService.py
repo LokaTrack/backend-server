@@ -3,15 +3,13 @@ from urllib.parse import unquote
 from app.config.firestore import db
 from fastapi import HTTPException
 from datetime import datetime, timezone
-from app.models.deliveryModel import packageDeliveryModel
-from app.utils.location import getPackageLocation
 from app.utils.time import convert_utc_to_wib
 
 # ADD Package to packageCollection
 async def addPackage(packageDataInput, currentUser):
     try:
         # Check if user is admin
-        if currentUser["role"] not in ["admin"]:
+        if currentUser["role"] not in ["admin", "driver"]:
             raise HTTPException(
                 status_code=403,
                 detail={

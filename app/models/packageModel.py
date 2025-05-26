@@ -6,12 +6,14 @@ from enum import Enum
 # Order item model
 class orderItemModel(BaseModel):
     name: str
-    quantity: int
+    quantity: float
     unitPrice: float
     total: float
-    notes: Optional[str] = ""
-    weight: float = 0.0  # per item in kg    
-    
+    weight: float = 0.0  
+    unitMetrics: str  
+    type: str   # Type of product, e.g., "HYDROPONIC", "ORGANIC", etc.
+
+
     @field_validator('total')
     @classmethod
     def validate_total(cls, total, values):
@@ -29,17 +31,22 @@ class orderItemModel(BaseModel):
 # Package order model
 class packageOrderModel(BaseModel):
     orderNo: str
+    orderId : str
+    invoiceNo: str
+    invoiceDueAt : Optional [datetime]
     orderDate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     customer: str
+    costomerType : Optional[str] 
     address: str
     addressMapUrl: Optional[str] = None
     phone: str
     items: List[orderItemModel]
-    totalWeight: float = 0.0  # in kg
+    totalWeight: float = 0.0  
     subTotal: float
     discount: float = 0
     shipping: float = 0
     totalPrice: float
+    paymentStatus: Optional[str] 
     orderNotes: Optional[str] = ""
     
     @field_validator('subTotal')

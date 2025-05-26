@@ -3,6 +3,7 @@ from app.models.userModel import UserModel
 from app.models.authModel import OtpVerificationModel, EmailVerificationModel
 from app.utils.security import getPasswordHash, verifyPassword, createAccessToken
 from app.utils.emailVerification import sendVerificationEmail
+from app.services.lokataniService import authLokatani
 from app.utils.email import sendEmail
 from app.utils.template import renderTemplate
 from app.utils.time import convert_utc_to_wib
@@ -146,10 +147,10 @@ async def loginUser(userDataInput):
     try : 
         # Find user by email
         userDocs = (
-        db.collection("userCollection")
-        .where(filter=FieldFilter("email", "==", userDataInput.email))
-        .limit(1)
-        .get()
+            db.collection("userCollection")
+            .where(filter=FieldFilter("email", "==", userDataInput.email))
+            .limit(1)
+            .get()
         )
         #[
         #   <google.cloud.firestore_v1.document.DocumentSnapshot object at 0x7f1234567890> -> snapshot
@@ -198,15 +199,31 @@ async def loginUser(userDataInput):
                 }
             )
 
+        try : 
+            # Authenticate with Lokatani API
+            lokataniAuthResponse = await authLokatani(userDataInput.email, userDataInput.password)
+            
+            responseData = lokataniAuthResponse.get("data")
+            lokataniSession = responseData.get("token")
+
+        except HTTPException:
+            # The external API service already formats the error, just re-raise it
+            raise
+
         # Generate token
         userData={
             "userId": userDataDB["userId"],
             "email": userDataDB["email"],
             "role": userDataDB["role"],
-            "username": userDataDB["username"]
+            "username": userDataDB["username"],
+            "lokataniSession": lokataniSession,
             }
         token = createAccessToken(userData)
-        userData.update({"token": token}) # Add token to data dictionary
+        
+        userData.update({
+                "token": token,
+                "lokataniSession": lokataniSession
+            }) # Add token to data dictionary
 
         return {
             "status": "success",

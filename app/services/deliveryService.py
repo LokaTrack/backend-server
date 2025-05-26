@@ -3,6 +3,7 @@ from app.utils.storeImage import uploadBytesToStorage
 from app.utils.compress import compress_image
 from app.utils.time import convert_utc_to_wib
 from app.config.firestore import db
+from app.services.lokataniService import addLokataniPackage
 from datetime import datetime, timezone
 from google.cloud.firestore import DELETE_FIELD
 from fastapi import HTTPException
@@ -29,6 +30,25 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
         deliveryData = deliveryDataInput.dict()
         orderNoFiltered = deliveryData["orderNo"].replace("/", "_")
 
+        # check if package status is already "dikirim"
+        packageDeliveryDoc = ( 
+            db.collection("packageDeliveryCollection")
+            .document(orderNoFiltered)
+            .get()
+        )
+        if packageDeliveryDoc.exists :
+            status = packageDeliveryDoc.to_dict().get("deliveryStatus")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "fail",
+                    "message": f"Paket dengan id '{deliveryDataInput.orderNo}' sudah dalam status '{status}'.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+
+        await addLokataniPackage(deliveryData.get("orderNo"), currentUser)
+
         # Check if package exists in packageOrderCollection
         packageOrderDoc = (
             db.collection("packageOrderCollection")
@@ -47,22 +67,6 @@ async def startDeliveryPackage(deliveryDataInput, currentUser):
             )
         packageOrderDoc = packageOrderDoc.to_dict()
         
-        # check if package status is already "dikirim"
-        packageDeliveryDoc = ( 
-            db.collection("packageDeliveryCollection")
-            .document(orderNoFiltered)
-            .get()
-        )
-        if packageDeliveryDoc.exists :
-            status = packageDeliveryDoc.to_dict().get("deliveryStatus")
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "status": "fail",
-                    "message": f"Paket dengan id '{deliveryDataInput.orderNo}' sudah dalam status '{status}'.",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-            )
         
         # get package location
         # packageLocation = await getPackageLocation(deliveryDataInput.trackerId)

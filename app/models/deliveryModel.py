@@ -18,8 +18,7 @@ class packageDeliveryModel(BaseModel):
     itemsList: Optional [list] = None
     totalWeight: Optional [float] = 0
     totalPrice: Optional [float] = 0
-    deliveryStatus: deliveryStatusEnum = deliveryStatusEnum.delivery
-    trackerId: Optional[str] = "CC:DB:A7:9B:7A:00"    
+    deliveryStatus: deliveryStatusEnum = deliveryStatusEnum.delivery  
     deliveryStartTime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     checkInTime: Optional[datetime] = None
     checkOutTime: Optional[datetime] = None

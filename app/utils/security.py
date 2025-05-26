@@ -16,6 +16,7 @@ load_dotenv()
 ACCESS_TOKEN_EXPIRED_DAYS = os.getenv("ACCESS_TOKEN_EXPIRED_DAYS", "30")  # Default to 30 days if not set
 ALGORITHM = os.getenv("ALGORITHM", "HS256")  # Default to HS256 if not set
 SECRET_KEY = os.getenv("SECRET_KEY")
+APP_DOMAIN = os.getenv("APP_DOMAIN",  "lokatrack")
 
 # Password hashing
 pwd_context = CryptContext(
@@ -38,20 +39,20 @@ def createAccessToken(data: dict, expires_delta: Optional[timedelta] = None):
 
     # if expires_delta is provided, use it
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
         # data from .env always in string format
         expired_days = int(ACCESS_TOKEN_EXPIRED_DAYS) 
-        expire = datetime.utcnow() + timedelta(days=expired_days)
+        expire = datetime.now(timezone.utc) + timedelta(days=expired_days)
 
-    issuer = os.getenv("APP_DOMAIN") or "lokatrack"
     dataToEncode = {
-        "userId": data["userId"],
-        "email": data["email"],
-        "role": data["role"],
-        "username": data["username"],
+        "userId": data.get("userId"),
+        "email": data.get("email"),
+        "role": data.get("role"),
+        "username": data.get("username"),
         "exp": expire,
-        "iss": issuer,
+        "iss": APP_DOMAIN,
+        "lokataniSession": data.get("lokataniSession", None)  # Optional field
     }
 
     encoded_jwt = jwt.encode(
