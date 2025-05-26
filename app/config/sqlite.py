@@ -1,7 +1,7 @@
 import sqlite3
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -31,10 +31,10 @@ def init_db():
             tracker_id TEXT NOT NULL,
             latitude REAL NULL,
             longitude REAL NULL,
-            receive_time TEXT NOT NULL,
-            send_time TEXT,
+            receive_time DATETIME NOT NULL,
+            send_time DATETIME,
             latency_ms REAL,
-            created_at TEXT NOT NULL
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
         ''')
         
@@ -42,6 +42,12 @@ def init_db():
         cursor.execute('''
         CREATE INDEX IF NOT EXISTS idx_tracker_id
         ON mqtt_gps_data (tracker_id)
+        ''')
+        
+        # Create index for time-based queries
+        cursor.execute('''
+        CREATE INDEX IF NOT EXISTS idx_receive_time
+        ON mqtt_gps_data (receive_time)
         ''')
         
         conn.commit()
@@ -59,28 +65,29 @@ def store_gps_data(tracker_id, latitude, longitude, receive_time, send_time=None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+        # logger.debug(f"All Time : {receive_time} - {send_time} = {latency_ms} ms")
+        # logger.debug(f"Data type for time : {type(receive_time)} - {type(send_time)}")
         # Convert datetime objects to ISO format strings
-        if isinstance(receive_time, datetime):
-            receive_time = receive_time.isoformat()
+        # if isinstance(receive_time, datetime):
+        #     receive_time = receive_time.isoformat()
         
-        if isinstance(send_time, datetime):
-            send_time = send_time.isoformat()
+        # if isinstance(send_time, datetime):
+        #     send_time = send_time.isoformat()
         
-        current_time = datetime.now().isoformat()
+        # current_time = datetime.now().isoformat()
         
         cursor.execute('''
         INSERT INTO mqtt_gps_data 
-        (tracker_id, latitude, longitude, receive_time, send_time, latency_ms, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (tracker_id, latitude, longitude, receive_time, send_time, latency_ms)
+        VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             tracker_id, 
             latitude, 
             longitude, 
             receive_time, 
             send_time,
-            latency_ms,
-            current_time
+            latency_ms
+            # current_time
         ))
         
         conn.commit()
@@ -111,7 +118,30 @@ def get_recent_gps_data(trackerId=None, limit=100):
             ''', (limit,))
         
         rows = cursor.fetchall()
-        return [dict(row) for row in rows]
+        # return [dict(row) for row in rows]
+        # Convert datetime strings back to datetime objects
+        result = []
+        for row in rows:
+            row_dict = dict(row)
+            # SQLite returns datetime as string, convert back to datetime objects
+            for field in ['receive_time', 'send_time', 'created_at']:
+                if row_dict.get(field):
+                    try:
+                        # Handle both formats: with and without 'Z' suffix
+                        time_str = row_dict[field]
+                        if time_str.endswith('Z'):
+                            row_dict[field] = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                        elif '+' in time_str or time_str.endswith('UTC'):
+                            row_dict[field] = datetime.fromisoformat(time_str)
+                        else:
+                            # Assume UTC if no timezone info
+                            row_dict[field] = datetime.fromisoformat(time_str).replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        # Keep as string if conversion fails
+                        pass
+            result.append(row_dict)
+        
+        return result
     except Exception as e:
         logger.error(f"Error retrieving GPS data from SQLite: {str(e)}")
         return []
