@@ -520,6 +520,8 @@ async def get_all_delivery_packages_service(status=None, driver_id=None, date_fr
         if driver_id:
             query = query.where(filter=FieldFilter("driverId", "==", driver_id))
         
+        # Order by lastUpdateTime descending 
+        query = query.order_by("lastUpdateTime", direction="DESCENDING")
         # Note: For date filtering, we need to get data and filter in Python
         # since complex date operations aren't fully supported in Firestore queries
         
