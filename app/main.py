@@ -115,7 +115,7 @@ async def root():
 
 if __name__ == "__main__":
     logger.debug("Starting FastAPI application, log level: %s", log_level)
-    uvicorn.run(socket_app, host="0.0.0.0", port=8000, log_level=log_level.lower())
+    uvicorn.run(socket_app, host="127.0.0.1", port=8000, log_level=log_level.lower())
 # now you can run the app using the command:
 # python -m app.main
 # or using the command:

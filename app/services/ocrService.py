@@ -207,20 +207,21 @@ async def getReturnItems (imageFile):
                 continue
             
             # Pattern: No Item Qty Return Rp Harga Rp Total
-        match = re.match(r'^(\d+)\s+(.+?)\s+([0-9loiOIl,\.]+)(?:\s+([0-9loiOIl,\.]+))?', line.strip())
-        if match:
-            no = int(match.group(1))
-            item = match.group(2).strip()
-            qty = parse_qty_return(match.group(3))
-            ret = parse_qty_return(match.group(4)) if match.group(4) else 0.0 
-    
-            if ret > 0:
-                itemResult.append({
-                    "No": no,
-                    "Item": item,
-                    "Qty": qty,
-                    "Return": ret
-                })
+            match = re.match(r'^(\d+)\s+(.+?)\s+([0-9loiOIl,\.]+)(?:\s+([0-9loiOIl,\.]+))?', line.strip())
+            
+            if match:
+                no = int(match.group(1))
+                item = match.group(2).strip()
+                qty = parse_qty_return(match.group(3))
+                ret = parse_qty_return(match.group(4)) if match.group(4) else 0.0
+        
+                if ret > 0:
+                    itemResult.append({
+                        "No": no,
+                        "Item": item,
+                        "Qty": qty,
+                        "Return": ret
+                    })
 
 
         endTime = time.time() # for debugging

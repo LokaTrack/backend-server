@@ -4,3 +4,4 @@ service_account.json
 **/*.pyc
 *.bak
 data
+test

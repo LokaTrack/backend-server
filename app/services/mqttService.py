@@ -81,7 +81,7 @@ def process_gps_data(gps_data: GPSDataModel):
 
         trackerId = gps_data.id
         geopoint = firestore.GeoPoint(gps_data.lat, gps_data.long)
-        timestamp = datetime.fromisoformat(gps_data.timestamp)
+        # timestamp = datetime.fromisoformat(gps_data.timestamp)
 
         # Handle timestamp with 'Z' suffix properly
         timestamp_str = gps_data.timestamp
