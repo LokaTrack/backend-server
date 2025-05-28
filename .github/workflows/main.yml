@@ -36,6 +36,10 @@ jobs:
             OLD_HASH=""
           fi
 
+          # Resetting git repository
+          echo "Resetting git repository..."
+          git reset --hard  
+
           git pull origin ${{ secrets.MAIN_BRANCH }}
 
           # Check if requirements.txt has changed
