@@ -130,7 +130,7 @@ def process_gps_data(gps_data: GPSDataModel):
         historyData = {"location": geopoint, "timestamp": timestamp}
 
         # Generate UUIDv7 (timestamp-based)
-        historyId = str(object=uuid7())
+        historyId = str(uuid7())
 
         # save location to history
         historyRef = trackerRef.collection("locationHistory").document(historyId)
