@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.responses import JSONResponse
 from app.models.userModel import UpdatePasswordModel, updatePhoneNumberModel, UpdateUsernameModel
 from app.utils.auth import get_current_user
-from app.services.userService import getDashboard, getHistory
+from app.services.userService import getDashboard, getHistory, getDeliveries
 
 router = APIRouter(prefix="/api/v1", tags=["User Application"])
 
@@ -25,6 +25,19 @@ async def get_history_data(currentUser: dict = Depends(get_current_user)):
     try:    
         print("try to get dashboard")
         result = await getHistory(currentUser)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+        )
+    
+@router.get("/deliveries") 
+async def get_deliveries_data(currentUser: dict = Depends(get_current_user)):
+    """Get user deliveries data"""
+    try:
+        # Implement the logic to retrieve user deliveries data
+        result = await getDeliveries(currentUser)
         return result
     except HTTPException as e:
         return JSONResponse(
