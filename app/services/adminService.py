@@ -72,15 +72,16 @@ logger = logging.getLogger(__name__)
 async def get_admin_dashboard_service(currentUser):
     """Get admin dashboard statistics"""
     try:
+        # Check if user is admin
         if currentUser["role"] not in ["admin"]:
             raise HTTPException(
                 status_code=403,
                 detail={
                     "status": "fail",
-                    "message": "Anda tidak memiliki akses untuk melihat user!",
+                    "message": "Anda tidak memiliki akses!",
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
-            )        
+            )   
         # Get total user count
         user_count = len(list(db.collection("userCollection").stream()))
         
@@ -146,6 +147,8 @@ async def get_admin_dashboard_service(currentUser):
                 "recentDeliveries": recent_deliveries
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error retrieving admin dashboard: {str(e)}")
         raise HTTPException(
@@ -157,9 +160,19 @@ async def get_admin_dashboard_service(currentUser):
             }
         )
 
-async def getAllUsers(role=None, email_verified=None, search=None, limit=100, offset=0):
+async def getAllUsers(currentUser, role=None, email_verified=None, search=None, limit=100, offset=0):
     """Get all users with optional filtering"""
     try:
+        # Check if user is admin
+        if currentUser["role"] not in ["admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "status": "fail",
+                    "message": "Anda tidak memiliki akses!",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
         # Base query
         query = db.collection("userCollection")
         
@@ -234,6 +247,8 @@ async def getAllUsers(role=None, email_verified=None, search=None, limit=100, of
                 }
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error retrieving users: {str(e)}")
         raise HTTPException(
@@ -507,9 +522,19 @@ async def assign_tracker_service (userId, trackerId, currentUser):
             }
         )
 
-async def get_all_delivery_packages_service(status=None, driver_id=None, date_from=None, date_to=None, limit=100, offset=0):
+async def get_all_delivery_packages_service(currentUser, status=None, driver_id=None, date_from=None, date_to=None, limit=100, offset=0):
     """Get all delivery packages with optional filtering"""
     try:
+        # Check if user is admin
+        if currentUser["role"] not in ["admin"]:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "status": "fail",
+                    "message": "Anda tidak memiliki akses!",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )        
         # Base query
         query = db.collection("packageDeliveryCollection")
         
@@ -590,6 +615,8 @@ async def get_all_delivery_packages_service(status=None, driver_id=None, date_fr
                 }
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error retrieving delivery packages: {str(e)}")
         raise HTTPException(
@@ -610,7 +637,7 @@ async def getGPSData(trackerId, limit, currentUser):
                 status_code=403,
                 detail={
                     "status": "fail",
-                    "message": "Anda tidak memiliki akses untuk melihat user!",
+                    "message": "Anda tidak memiliki akses!",
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
@@ -623,6 +650,8 @@ async def getGPSData(trackerId, limit, currentUser):
                 "count": len(data)
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error while retrieving GPS data: {str(e)}")
         raise HTTPException(
