@@ -131,8 +131,8 @@ async def getHistory (currentUser):
                 "status": "success",
                 "message": f"Tidak ada data pengiriman untuk user '{currentUser['username']}'.",
                 "data": { 
-                    deliveredPackages : 0,
-                    returnedPackages : 0,
+                    "deliveredPackages" : 0,
+                    "returnedPackages" : 0,
                     "totalDeliveries": 0,   
                     "history": [] 
                     },
@@ -195,3 +195,55 @@ async def getHistory (currentUser):
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
+    
+
+async def getDeliveries (currentUser) :
+    """Get all user's delivery"""
+    try : 
+        deliveries = []
+        deliveryDocs = (
+            db.collection("packageDeliveryCollection")
+            .where(filter=FieldFilter("driverId", "==", currentUser["userId"]))
+            .order_by("lastUpdateTime", direction="DESCENDING")
+            .stream()
+        )
+        if not deliveryDocs:
+            return {
+                "status": "success",
+                "message": f"Tidak ada data pengiriman untuk user '{currentUser['username']}'.",
+                "data": {
+                    "deliveries": []
+                },
+            }
+
+
+        for deliveryDoc in deliveryDocs: 
+            deliveryData = deliveryDoc.to_dict()
+            # convert all timestamps in response to WIB
+            timestamp_fields = ["deliveryStartTime", "checkInTime", "checkOutTime", "returnTime", "lastUpdateTime"]
+            for field in timestamp_fields:
+                if field in deliveryData and deliveryData[field]:
+                    deliveryData[field] = convert_utc_to_wib(deliveryData[field]).isoformat()
+            
+            deliveries.append(deliveryData)
+
+        return {
+            "status": "success",
+            "message": "Mengambil data pengiriman berhasil",
+            "data": {
+                "deliveries": deliveries
+            }   
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving delivery packages: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Terjadi kesalahan: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
+        

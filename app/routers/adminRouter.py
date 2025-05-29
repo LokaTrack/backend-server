@@ -56,7 +56,8 @@ async def get_all_users(
             email_verified=email_verified,
             search=search,
             limit=limit,
-            offset=offset
+            offset=offset,
+            currentUser=currentUser
         )
         return result
     except HTTPException as e:
@@ -73,7 +74,7 @@ async def assign_tracker(
 ):
     """Assign a tracker to a user"""
     try:
-        result = await assign_tracker_service(userId, trackerId, currentUser)
+        result = await assign_tracker_service(userId=userId, trackerId=trackerId, currentUser=currentUser)
         return result
     except HTTPException as e:
         return JSONResponse(
@@ -99,7 +100,8 @@ async def get_all_deliveries(
             date_from=date_from,
             date_to=date_to,
             limit=limit,
-            offset=offset
+            offset=offset,
+            currentUser=currentUser
         )
         return result
     except HTTPException as e:
