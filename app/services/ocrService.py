@@ -328,21 +328,46 @@ async def scanBarcode(imageFile):
                     "message": "QR code detected but data is not a URL",
                     "data": {
                         "content": data,
+                        "orderNo": "Null",
                         "processingTime": processingTime
                     }
                 }
         else:
-            # No QR code found
+            # No QR code found, try OCR
+            logger.info(f"No QR code detected in {imageFile.filename}. Attempting OCR.")
+            # Reset file pointer for processOCR if it consumes the stream
+            await imageFile.seek(0) 
+            ocr_text = await processOCR(imageFile)
+            
             endTime = time.time()
             processingTime = endTime - startTime
             
+            # Attempt to find Order No in OCR text as a fallback
+            orderNoMatch = re.search(r'(OB/\d{2}-\d{4}/\d{3})', text)
+            extractedOrderNo = orderNoMatch.group(1) if orderNoMatch else "Not found in OCR"
+
             return {
-                "status": "fail",
-                "message": "No QR code detected",
+                "status": "success",
+                "message": "No QR code detected, OCR performed.",
                 "data": {
+                    "type": "ocr",
+                    "rawText": ocr_text,
+                    "orderNo": extractedOrderNo,
                     "processingTime": processingTime
                 }
             }
+
+            # # No QR code found
+            # endTime = time.time()
+            # processingTime = endTime - startTime
+            
+            # return {
+            #     "status": "fail",
+            #     "message": "No QR code detected",
+            #     "data": {
+            #         "processingTime": processingTime
+            #     }
+            # }
     
     except HTTPException:
         raise
