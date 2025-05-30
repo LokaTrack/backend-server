@@ -343,7 +343,7 @@ async def scanBarcode(imageFile):
             processingTime = endTime - startTime
             
             # Attempt to find Order No in OCR text as a fallback
-            orderNoMatch = re.search(r'(OB/\d{2}-\d{4}/\d{3})', text)
+            orderNoMatch = re.search(r'(OB/\d{2}-\d{4}/\d{3})', ocr_text)
             extractedOrderNo = orderNoMatch.group(1) if orderNoMatch else "Not found in OCR"
 
             return {
