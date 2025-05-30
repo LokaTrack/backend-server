@@ -125,7 +125,22 @@ async def getPackageDetail(orderNo):
         packageData.update({
             "orderDate": convert_utc_to_wib(packageData["orderDate"]),
         })
+
+        # Convert floats to ints if they are whole numbers
+        root_fields_to_convert = ["discount", "totalWeight", "subTotal", "totalPrice", "shipping"]
+        for field in root_fields_to_convert:
+            if field in packageData and isinstance(packageData[field], float) and packageData[field].is_integer():
+                packageData[field] = int(packageData[field])
         
+        if 'items' in packageData and isinstance(packageData['items'], list):
+            for item in packageData['items']:
+                if isinstance(item, dict):
+                    item_fields_to_convert = ['unitPrice', 'total', 'weight'] # Assuming quantity is already int
+                    for item_field in item_fields_to_convert:
+                        if item_field in item and isinstance(item[item_field], float) and item[item_field].is_integer():
+                            item[item_field] = int(item[item_field])
+       
+
         return {
             "status": "success",
             "message": "Berhasil mendapatkan detail paket",
