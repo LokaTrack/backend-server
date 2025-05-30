@@ -34,7 +34,8 @@ def init_db():
             receive_time DATETIME NOT NULL,
             send_time DATETIME,
             latency_ms REAL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            iteration INTEGER DEFAULT 0
         )
         ''')
         
@@ -60,7 +61,7 @@ def init_db():
         if conn:
             conn.close()
 
-def store_gps_data(tracker_id, latitude, longitude, receive_time, send_time=None, latency_ms=None):
+def store_gps_data(tracker_id, latitude, longitude, receive_time, iteration, send_time=None, latency_ms=None):
     """Store GPS data in SQLite database"""
     try:
         conn = get_db_connection()
@@ -78,15 +79,16 @@ def store_gps_data(tracker_id, latitude, longitude, receive_time, send_time=None
         
         cursor.execute('''
         INSERT INTO mqtt_gps_data 
-        (tracker_id, latitude, longitude, receive_time, send_time, latency_ms)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (tracker_id, latitude, longitude, receive_time, send_time, latency_ms, iteration)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
             tracker_id, 
             latitude, 
             longitude, 
             receive_time, 
             send_time,
-            latency_ms
+            latency_ms,
+            iteration
             # current_time
         ))
         
