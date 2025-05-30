@@ -468,6 +468,25 @@ async def getPackageReturnById(orderNo, currentUser):
             )
         deliveryReturnData = deliveryReturnDoc.to_dict()
 
+        # Convert floats to ints if they are whole numbers
+        for field in ['totalWeight', 'totalPrice']:
+            if field in deliveryReturnData and isinstance(deliveryReturnData[field], float) and deliveryReturnData[field].is_integer():
+                deliveryReturnData[field] = int(deliveryReturnData[field])
+
+        if 'returnedItems' in deliveryReturnData and isinstance(deliveryReturnData['returnedItems'], list):
+            for item in deliveryReturnData['returnedItems']:
+                if isinstance(item, dict):
+                    for item_field in ['total', 'unitPrice', 'weight']: # Assuming quantity is already int
+                        if item_field in item and isinstance(item[item_field], float) and item[item_field].is_integer():
+                            item[item_field] = int(item[item_field])
+        
+        # Convert timestamp fields to WIB
+        timestamp_fields = ["returnDate"] # Add other timestamp fields if any
+        for field in timestamp_fields:
+            if field in deliveryReturnData and deliveryReturnData[field]:
+                # Assuming convert_utc_to_wib returns a datetime object
+                deliveryReturnData[field] = convert_utc_to_wib(deliveryReturnData[field]).isoformat()
+
         return {
             "status": "success",
             "message": f"Berhasil mendapatkan detail pengembalian paket '{orderNo}'",

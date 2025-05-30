@@ -136,16 +136,20 @@ def on_message(client, userdata, msg):
 
         # send via web socket
         # sio.emit("tracker:location_update", gps_data.dict(), room=gps_data.trackerId)
-        store_gps_data(
+
+        # Store the GPS data in SQLite
+        store_gps_data( 
             tracker_id=data.get("id"),
             latitude=data.get("lat"),
             longitude=data.get("long"),
             receive_time=receive_time,
             send_time=send_time,
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
+            iteration=data.get("iteration")
         )
         gps_data = GPSDataModel(**data)
 
+        # Send the GPS data to the socket io
         websocket_data = {
             "trackerId": gps_data.id,
             "location": {
