@@ -1,8 +1,8 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
+from fastapi import APIRouter, Body, File, UploadFile, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from typing import List
-from app.services.ocrService import getItemsData, getOrderNo, getReturnItems, scanBarcode
-
+from app.services.ocrService import getItemsData, getOrderNo, getReturnItems, scanBarcode, getOrderNoFromURL
+from app.utils.auth import get_current_user
 
 # Assuming you might want to protect these endpoints later
 # from app.utils.auth import get_current_user
@@ -54,6 +54,21 @@ async def scan_barcode(image: UploadFile = File(...)):
     """Uploads an image file and scans it for QR codes or barcodes."""
     try:
         result = await scanBarcode(image)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+        )
+
+@router.get("/order-no")
+async def ocr_get_order_no_from_url(
+    url: str = Body(..., embed=True, description="URL containing the Order No"),
+    currentUser: dict = Depends(get_current_user)
+    ):
+    """Extracts the Order No from a given URL."""
+    try:
+        result = await getOrderNoFromURL(url, currentUser)
         return result
     except HTTPException as e:
         return JSONResponse(

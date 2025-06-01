@@ -381,3 +381,73 @@ async def scanBarcode(imageFile):
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
+    
+async def getOrderNoFromURL (url, currentUser): 
+    """Extracts Order No from a given URL."""
+    try : 
+        # Check if user is admin or driver
+        if currentUser["role"] not in ["admin", "driver"]:    
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "status": "fail",
+                    "message": "Anda tidak memiliki akses untuk melakukan ini.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        startTime = time.time()  # for debugging
+        if not url.startswith('http://') and not url.startswith('https://'):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "fail",
+                    "message": "URL tidak valid. Harus dimulai dengan http:// atau https://",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        # Parse HTML and extract text
+        soup = BeautifulSoup(response.text, 'html.parser')
+        text = soup.get_text(separator="\n")
+        
+        # Look for order number in the text
+        match = re.search(r'No\.\s*(OB/\d{2}-\d{4}/\d+)', text)
+        order_no = match.group(1) if match else "Not found"
+        
+        endTime = time.time()
+        processingTime = endTime - startTime
+        
+        if order_no == "Not found":
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": "Order No tidak ditemukan dalam URL yang diberikan.",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        return {
+            "status": "success",
+            "message": "Order No extracted from URL",
+            "data": {
+                "url": url,
+                "orderNo": order_no,
+                "processingTime": processingTime
+            }
+        }
+    
+    except HTTPException:
+        raise    
+    except Exception as e:
+        logger.error(f"Error processing URL {url}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Failed to process URL {url}: {str(e)}"
+            }
+        )
+        
+            
