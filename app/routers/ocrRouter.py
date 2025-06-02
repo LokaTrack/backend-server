@@ -25,17 +25,17 @@ async def get_all_items(images: List[UploadFile] = File(...)):
             content=e.detail
         )
 
-@router.post("/order-no")
-async def ocr_get_order_no(image: UploadFile = File(...)):
-    """ Uploads an image file and extracts the Order No using OCR. """
-    try:
-        result = await getOrderNo(image)
-        return result
-    except HTTPException as e:
-        return JSONResponse(
-            status_code=e.status_code,
-            content=e.detail
-        )
+# @router.post("/order-no")
+# async def ocr_get_order_no(image: UploadFile = File(...)):
+#     """ Uploads an image file and extracts the Order No using OCR. """
+#     try:
+#         result = await getOrderNo(image)
+#         return result
+#     except HTTPException as e:
+#         return JSONResponse(
+#             status_code=e.status_code,
+#             content=e.detail
+#         )
 
 @router.post("/return-item")
 async def get_return_items_only(images: List[UploadFile] = File(...)):
@@ -61,7 +61,7 @@ async def scan_barcode(image: UploadFile = File(...)):
             content=e.detail
         )
 
-@router.get("/order-no")
+@router.post("/order-no")
 async def ocr_get_order_no_from_url(
     url: str = Body(..., embed=True, description="URL containing the Order No"),
     currentUser: dict = Depends(get_current_user)
