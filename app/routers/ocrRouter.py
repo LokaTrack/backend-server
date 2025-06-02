@@ -37,7 +37,7 @@ async def get_all_items(images: List[UploadFile] = File(...)):
 #             content=e.detail
 #         )
 
-@router.post("/return-item-test")
+@router.post("/return-item")
 async def get_return_items_only(
     images: List[UploadFile] = File(...),
     # orderNo : str = Form (..., description="Order No for the return item", example="OB/01-2025/19129"),
@@ -51,7 +51,7 @@ async def get_return_items_only(
             status_code=e.status_code,
             content=e.detail
         )
-@router.post("/return-item")
+@router.post("/return-item-db")
 async def get_return_items_only(
     images: List[UploadFile] = File(...),
     orderNo : str = Form (..., description="Order No for the return item", example="OB/03-2025/193"),
