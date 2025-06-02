@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Body, File, UploadFile, HTTPException, Depends
+from fastapi import APIRouter, Body, File, UploadFile, HTTPException, Depends, Form
 from fastapi.responses import JSONResponse
 from typing import List
-from app.services.ocrService import getItemsData, getOrderNo, getReturnItems, scanBarcode, getOrderNoFromURL
+from app.services.ocrService import getItemsData, getOrderNo, getReturnItems, scanBarcode, getOrderNoFromURL, getReturnItemsPaddle, getReturnItemPaddleUsingDatabase
 from app.utils.auth import get_current_user
 
 # Assuming you might want to protect these endpoints later
@@ -38,10 +38,27 @@ async def get_all_items(images: List[UploadFile] = File(...)):
 #         )
 
 @router.post("/return-item")
-async def get_return_items_only(images: List[UploadFile] = File(...)):
+async def get_return_items_only(
+    images: List[UploadFile] = File(...),
+    # orderNo : str = Form (..., description="Order No for the return item", example="OB/01-2025/19129"),
+    ):
     """Uploads one or more image files and extracts return item data using OCR."""
     try:
-        result = await getReturnItems(images)
+        result = await getReturnItemsPaddle(images)
+        return result
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content=e.detail
+        )
+@router.post("/return-item-db")
+async def get_return_items_only(
+    images: List[UploadFile] = File(...),
+    orderNo : str = Form (..., description="Order No for the return item", example="OB/03-2025/193"),
+    ):
+    """Uploads one or more image files and extracts return item data using OCR."""
+    try:
+        result = await getReturnItemPaddleUsingDatabase(images, orderNo)
         return result
     except HTTPException as e:
         return JSONResponse(
@@ -75,3 +92,4 @@ async def ocr_get_order_no_from_url(
             status_code=e.status_code,
             content=e.detail
         )
+    
