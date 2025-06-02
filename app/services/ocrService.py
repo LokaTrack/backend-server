@@ -12,8 +12,12 @@ import cv2
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
+from paddleocr import PaddleOCR
+from app.config.firestore import db
 
 logger = logging.getLogger(__name__)
+
+paddle_ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
 async def processOCR (imageFile):
     """Reads an UploadFile, performs OCR, and returns the extracted text."""
@@ -449,5 +453,390 @@ async def getOrderNoFromURL (url, currentUser):
                 "message": f"Failed to process URL {url}: {str(e)}"
             }
         )
+
+async def processPaddleOCR(imageFile):
+    """Process image using PaddleOCR and return extracted text with coordinates."""
+        # Check if PaddleOCR is properly initialized
+    if paddle_ocr is None:
+        raise HTTPException(
+            logger.error("PaddleOCR initialization failed. Check dependencies."),
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": "Saat ini fungsi OCR tidak tersedia. Silakan coba lagi nanti.",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
+    if not imageFile.content_type.startswith('image/'):
+        raise HTTPException(
+            status_code=400,
+            detail = {
+                "status": "fail",
+                "message": "File berupa gambar (jpg, png, gif) diperlukan!",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
+    try:
+        # Read image content into memory
+        content = await imageFile.read()
         
+        # Convert to numpy array for PaddleOCR
+        image = Image.open(io.BytesIO(content))
+        img_array = np.array(image)
+        
+        # Perform OCR with PaddleOCR
+        result = paddle_ocr.ocr(img_array, cls=True)
+        return result
+    except Exception as e:
+        logger.error(f"Error processing image {imageFile.filename} with PaddleOCR: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail={
+                "status": "fail",
+                "message": f"Failed to process image {imageFile.filename}: {str(e)}",
+                }
+            )
+
+def extract_table_data_from_paddle_result(paddle_result):
+    """Extract table data from PaddleOCR result by analyzing coordinates and text."""
+    if not paddle_result or not paddle_result[0]:
+        return []
+    
+    # Extract all text boxes with their coordinates and text
+    text_boxes = []
+    for line in paddle_result[0]:
+        bbox = line[0]  # Bounding box coordinates
+        text = line[1][0]  # Extracted text
+        confidence = line[1][1]  # Confidence score
+        
+        # Calculate center Y coordinate for row grouping
+        y_center = (bbox[0][1] + bbox[2][1]) / 2
+        x_left = bbox[0][0]
+        
+        text_boxes.append({
+            'text': text.strip(),
+            'y_center': y_center,
+            'x_left': x_left,
+            'confidence': confidence,
+            'bbox': bbox
+        })
+    
+    # Sort by Y coordinate (top to bottom)
+    text_boxes.sort(key=lambda x: x['y_center'])
+    
+    # Group text boxes into rows (same Y level)
+    rows = []
+    current_row = []
+    y_threshold = 20  # Pixels tolerance for same row
+    
+    for box in text_boxes:
+        if not current_row:
+            current_row.append(box)
+        else:
+            # Check if this box is on the same row as the previous ones
+            avg_y = sum(b['y_center'] for b in current_row) / len(current_row)
+            if abs(box['y_center'] - avg_y) <= y_threshold:
+                current_row.append(box)
+            else:
+                # Sort current row by X coordinate (left to right)
+                current_row.sort(key=lambda x: x['x_left'])
+                rows.append(current_row)
+                current_row = [box]
+    
+    # Don't forget the last row
+    if current_row:
+        current_row.sort(key=lambda x: x['x_left'])
+        rows.append(current_row)
+    
+    return rows
+
+def parse_delivery_order_rows(rows):
+    """Parse rows to extract delivery order items with return quantities."""
+    items = []
+    
+    for row in rows:
+        row_text = [box['text'] for box in row]
+        full_row_text = ' '.join(row_text)
+        
+        # Skip header rows or empty rows
+        if (not full_row_text.strip() or 
+            'no' in full_row_text.lower() or 
+            'item' in full_row_text.lower() or
+            'qty' in full_row_text.lower() or
+            'return' in full_row_text.lower() or
+            'unit' in full_row_text.lower() or
+            'price' in full_row_text.lower() or
+            'total' in full_row_text.lower() or
+            'notes' in full_row_text.lower()):
+            continue
+        
+        # Try to identify columns by position and content
+        no_val = None
+        item_name = ""
+        qty_val = 0.0
+        return_val = 0.0
+        
+        # Look for number pattern at the beginning (item number)
+        for i, text in enumerate(row_text):
+            # Check if it's a number (item number)
+            if re.match(r'^\d+$', text.strip()):
+                no_val = int(text.strip())
+                
+                # Item name is usually after the number
+                if i + 1 < len(row_text):
+                    # Collect item name (might span multiple cells)
+                    item_parts = []
+                    for j in range(i + 1, len(row_text)):
+                        current_text = row_text[j].strip()
+                        # Stop if we hit a number that looks like quantity
+                        if re.match(r'^[0-9loiOIl,\.]+$', current_text):
+                            break
+                        # Stop if we hit "Rp" (price indicator)
+                        if 'rp' in current_text.lower():
+                            break
+                        item_parts.append(current_text)
+                    
+                    item_name = ' '.join(item_parts).strip()
+                
+                # Look for quantities after item name
+                numeric_values = []
+                for j in range(i + 1, len(row_text)):
+                    text = row_text[j].strip()
+                    if re.match(r'^[0-9loiOIl,\.]+$', text):
+                        try:
+                            val = parse_qty_return(text)
+                            numeric_values.append(val)
+                        except:
+                            continue
+                    elif 'rp' in text.lower():
+                        break  # Stop at price
+                
+                # Assign quantities based on how many we found
+                if len(numeric_values) >= 2:
+                    qty_val = numeric_values[0]
+                    return_val = numeric_values[1]
+                elif len(numeric_values) == 1:
+                    qty_val = numeric_values[0]
+                    return_val = 0.0
+                
+                break
+        
+        # Only add if we found a valid item number and name
+        if no_val is not None and item_name:
+            items.append({
+                "No": no_val,
+                "Item": item_name,
+                "Qty": qty_val,
+                "Return": return_val
+            })
+    
+    return items
+
+async def getReturnItemsPaddle(imageFile):
+    """OCR to get Return Items using PaddleOCR."""
+    try:
+        startTime = time.time()
+        all_items = []
+        alltext = ""
+        for files in imageFile:
+            if not files.filename:
+                continue
+            try:
+                # Process with PaddleOCR
+                paddle_result = await processPaddleOCR(files)
+                
+                # Extract table structure
+                rows = extract_table_data_from_paddle_result(paddle_result)
+
+                # Parse delivery order data
+                items = parse_delivery_order_rows(rows)
+
+                all_items.extend(items)
+                # get all text from paddle_result for debugging
+                for line in paddle_result[0]:
+                    alltext += line[1][0] + "\n"
+                
+            except Exception as e:
+                logger.error(f"Skipping file {files.filename} due to processing error: {e}")
+                continue
+        
+        # Filter only items with return > 0
+        return_items = [item for item in all_items if item["Return"] > 0]
+        
+        endTime = time.time()
+        processingTime = endTime - startTime
+        
+        return {
+            "status": "success",
+            "message": "Return items extracted successfully using PaddleOCR",
+            "data": {
+                "returnItems": return_items,
+                "allItems": all_items,  # For debugging
+                "processingTime": processingTime, 
+                "rawText": f"{paddle_result}",
+                "allText": alltext  # For debugging
+
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in getReturnItemsPaddle: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Terjadi kesalahan dalam proses OCR dengan PaddleOCR: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        )
+    
+
+async def getReturnItemPaddleUsingDatabase (imagesFile, orderNo):
+    """Get return item only using paddle OCR + match with database"""
+    try :
+        startTime = time.time()  # for debugging
+        # get items from database
+        items_collection = (
+            db.collection("packageOrderCollection")
+            .document(orderNo.replace("/", "_"))  # Replace '/' with '-' for Firestore document ID
+            .collection("items")
+            .stream()
+        )
+        items_list = [item_doc.to_dict() for item_doc in items_collection]
+        # item_list : [{'weight': 1.0, 'unitPrice': 20000.0, 'unitMetrics': 'Pack', 'type': 'CONVENT', 'total': 20000.0, 'quantity': 1.0, 'name': 'Tomat Cherry'}, {'weight': 250.0, 'unitPrice': 16500.0, 'unitMetrics': 'Gram', 'type': 'HYDROPONIC', 'total': 33000.0, 'quantity': 2.0, 'name': 'Romain'}, {'weight': 250.0, 'unitPrice': 18700.0, 'unitMetrics': 'Gram', 'type': 'HYDROPONIC', 'total': 37400.0, 'qal': 33000.0, 'quantity': 2.0, 'name': 'Romain'}, {'weight': 250.0, 'unitPrice': 18700.0, 'unitMetrics': 'Gram', 'type': 'HYDROPONIC', 'total': 37400.0, 'quantity': 2.0, 'name': 'oakleaf red'}, {'weight': 250.0, 'unitPrice': 20000.0, 'unitMetrics': 'Gram', 'type': 'CONVENT', 'total': 20000.0, 'quantity': 1.0, 'name': 'Endive'}]
+        
+    
+        if not items_list:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "status": "fail",
+                    "message": f"No items found for order {orderNo}",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        
+        # Process OCR for all images
+        all_ocr_items = []
+        alltext = ""
+        
+        for files in imagesFile:
+            if not files.filename:
+                continue
+            try:
+                # Process with PaddleOCR
+                paddle_result = await processPaddleOCR(files)
+                
+                # Extract table structure
+                rows = extract_table_data_from_paddle_result(paddle_result)
+                
+                # Parse delivery order data
+                items = parse_delivery_order_rows(rows)
+                all_ocr_items.extend(items)
+                
+                # Get all text for debugging
+                for line in paddle_result[0]:
+                    alltext += line[1][0] + "\n"
+                    
+            except Exception as e:
+                logger.error(f"Skipping file {files.filename} due to processing error: {e}")
+                continue
+        
+        # Match OCR results with database items
+        matched_items = []
+        unmatched_ocr_items = []
+        
+        for ocr_item in all_ocr_items:
+            matched = False
+            ocr_item_name = ocr_item["Item"].lower().strip()
             
+            # Try to find matching item in database
+            for db_item in items_list:
+                db_item_name = db_item["name"].lower().strip()
+                
+                # Simple string matching 
+                if (ocr_item_name in db_item_name or 
+                    db_item_name in ocr_item_name or
+                    calculate_similarity(ocr_item_name, db_item_name) > 0.7):  # 70% similarity threshold
+                    
+                    # Create matched item with database info + OCR return quantity
+                    matched_item = {
+                        "No": ocr_item["No"],
+                        "name": db_item["name"],
+                        "weight": db_item.get("weight", 0),
+                        "unitPrice": db_item.get("unitPrice", 0),
+                        "unitMetrics": db_item.get("unitMetrics", ""),
+                        "type": db_item.get("type", ""),
+                        "total": db_item.get("total", 0),
+                        "quantity": db_item.get("quantity", 0),
+                        "ocrQuantity": ocr_item["Qty"],  # Quantity from OCR
+                        "returnQuantity": ocr_item["Return"],  # Return quantity from OCR
+                        "ocrItemName": ocr_item["Item"]  # Original OCR item name for reference
+                    }
+                    matched_items.append(matched_item)
+                    matched = True
+                    break
+            
+            if not matched:
+                unmatched_ocr_items.append(ocr_item)
+        
+        # Filter only items with return > 0
+        return_items = [item for item in matched_items if item["returnQuantity"] > 0]
+        
+        endTime = time.time()
+        processingTime = endTime - startTime
+        
+        return {
+            "status": "success",
+            "message": "Berhasil melakukan OCR dan mencocokkan dengan database",
+            "data": {
+                "returnItems": return_items,
+                "matchedItems": matched_items,  # All matched items
+                "unmatchedOcrItems": unmatched_ocr_items,  # OCR items that couldn't be matched
+                "databaseItems": items_list,  # Original database items for reference
+                "processingTime": processingTime,
+                "allText": alltext  # For debugging
+            }
+        }
+    
+    except HTTPException:
+        raise    
+    except Exception as e:
+        logger.error(f"Error processing ocr: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "fail",
+                "message": f"Failed to process ocr: {str(e)}"
+            }
+        )
+
+def calculate_similarity(str1, str2):
+    """Calculate similarity between two strings using Levenshtein distance."""
+    import difflib
+    return difflib.SequenceMatcher(None, str1, str2).ratio()
+
+def fuzzy_match_item_name(ocr_name, db_items, threshold=0.7):
+    """Find the best matching item from database using fuzzy string matching."""
+    best_match = None
+    best_score = 0
+    
+    ocr_name_clean = ocr_name.lower().strip()
+    
+    for db_item in db_items:
+        db_name_clean = db_item["name"].lower().strip()
+        
+        # Calculate similarity
+        score = calculate_similarity(ocr_name_clean, db_name_clean)
+        
+        # Also check if one string contains the other
+        if ocr_name_clean in db_name_clean or db_name_clean in ocr_name_clean:
+            score = max(score, 0.8)  # Boost score for substring matches
+        
+        if score > best_score and score >= threshold:
+            best_score = score
+            best_match = db_item
+    
+    return best_match, best_score
