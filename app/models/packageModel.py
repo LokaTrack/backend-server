@@ -32,7 +32,7 @@ class orderItemModel(BaseModel):
 class packageOrderModel(BaseModel):
     orderNo: str
     orderId : str
-    invoiceNo: str
+    invoiceNo: Optional[str]
     invoiceDueAt : Optional [datetime]
     orderDate: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     customer: str
