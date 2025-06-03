@@ -22,5 +22,4 @@ opencv-python==4.11.0.86
 numpy==2.2.5
 beautifulsoup4==4.13.4
 httpx==0.28.1
-paddlepaddle==3.0.0 
-paddleocr==2.7.3
+

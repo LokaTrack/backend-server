@@ -12,12 +12,12 @@ import cv2
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
-from paddleocr import PaddleOCR
 from app.config.firestore import db
+from httpx import AsyncClient, HTTPStatusError
 
 logger = logging.getLogger(__name__)
 
-paddle_ocr = PaddleOCR(use_textline_orientation=True, lang='en', ocr_version='PP-OCRv3', device='cpu')  # Initialize PaddleOCR
+# paddle_ocr = PaddleOCR(use_textline_orientation=True, lang='en', ocr_version='PP-OCRv3', device='cpu')  # Initialize PaddleOCR
 
 async def processOCR (imageFile):
     """Reads an UploadFile, performs OCR, and returns the extracted text."""
@@ -648,36 +648,51 @@ async def getReturnItemsPaddle(imageFile):
     """OCR to get Return Items using PaddleOCR."""
     try:
         startTime = time.time()
-        all_items = []
-        alltext = ""
+        files_to_send = []
+        
         for files in imageFile:
             if not files.filename:
                 continue
-            try:
-                # Process with PaddleOCR
-                paddle_result = await processPaddleOCR(files)
-                
-                # Extract table structure
-                rows = extract_table_data_from_paddle_result(paddle_result)
-
-                # Parse delivery order data
-                items = parse_delivery_order_rows(rows)
-
-                all_items.extend(items)
-                # Get all text from paddle_result for debugging
-                if paddle_result and len(paddle_result) > 0:
-                    result_dict = paddle_result[0]
-                    rec_texts = result_dict.get('rec_texts', [])
-                    for text in rec_texts:
-                        alltext += text + "\n"
-                
-            except Exception as e:
-                logger.error(f"Skipping file {files.filename} due to processing error: {e}")
+            
+            # Check file type
+            if not files.content_type.startswith('image/'):
+                logger.warning(f"Skipping non-image file: {files.filename}")
                 continue
+            
+            # Reset file pointer to beginning
+            await files.seek(0)
+            content = await files.read()
+            
+            # Prepare file tuple for multipart/form-data
+            files_to_send.append(
+                ('images', (files.filename, content, files.content_type))
+            )
         
-        # Filter only items with return > 0
-        return_items = [item for item in all_items if item["Return"] > 0]
-        
+        if not files_to_send:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "fail",
+                    "message": "Tidak ada file gambar yang valid ditemukan",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+
+        async with AsyncClient() as client:
+            response = await client.post(
+                "https://pblpnj.lokatani.id/lokatrack/ocr/return",
+                files=files_to_send,
+                timeout=90
+            )
+            response.raise_for_status()
+            
+        response = response.json()
+
+        return_items = response.get("data").get("returnItems", [])
+        all_items = response.get("data").get("allItems", [])  # For debugging
+        allText = response.get("data").get("allText", "")  # For debugging
+        paddle_result = response.get("data").get("rawText", "")  # For debugging
+
         endTime = time.time()
         processingTime = endTime - startTime
         
@@ -689,7 +704,7 @@ async def getReturnItemsPaddle(imageFile):
                 "allItems": all_items,  # For debugging
                 "processingTime": processingTime, 
                 "rawText": f"{paddle_result}",
-                "allText": alltext  # For debugging
+                "allText": allText  # For debugging
 
             }
         }
@@ -712,6 +727,53 @@ async def getReturnItemPaddleUsingDatabase (imagesFile, orderNo):
     """Get return item only using paddle OCR + match with database"""
     try :
         startTime = time.time()  # for debugging
+
+        files_to_send = []
+        for files in imagesFile:
+            if not files.filename:
+                continue
+            
+            # Check file type
+            if not files.content_type.startswith('image/'):
+                logger.warning(f"Skipping non-image file: {files.filename}")
+                continue
+            
+            # Reset file pointer to beginning
+            await files.seek(0)
+            content = await files.read()
+            
+            # Prepare file tuple for multipart/form-data
+            files_to_send.append(
+                ('images', (files.filename, content, files.content_type))
+            )
+        
+        if not files_to_send:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "fail",
+                    "message": "Tidak ada file gambar yang valid ditemukan",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        
+        async with AsyncClient() as client:
+            response = await client.post(
+                "https://pblpnj.lokatani.id/lokatrack/ocr/return",
+                files=files_to_send,
+                timeout=90
+            )
+            response.raise_for_status()
+            
+        response = response.json()
+
+        return_items = response.get("data").get("returnItems", [])
+        all_items = response.get("data").get("allItems", [])  # For debugging
+        allText = response.get("data").get("allText", "")  # For debugging
+        paddle_result = response.get("data").get("rawText", "")  # For debugging
+
+
+
         # get items from database
         items_collection = (
             db.collection("packageOrderCollection")
@@ -734,33 +796,8 @@ async def getReturnItemPaddleUsingDatabase (imagesFile, orderNo):
             )
         
         # Process OCR for all images
-        all_ocr_items = []
-        alltext = ""
-        
-        for files in imagesFile:
-            if not files.filename:
-                continue
-            try:
-                # Process with PaddleOCR
-                paddle_result = await processPaddleOCR(files)
-                
-                # Extract table structure
-                rows = extract_table_data_from_paddle_result(paddle_result)
-                
-                # Parse delivery order data
-                items = parse_delivery_order_rows(rows)
-                all_ocr_items.extend(items)
-                
-                # Get all text from paddle_result for debugging
-                if paddle_result and len(paddle_result) > 0:
-                    result_dict = paddle_result[0]
-                    rec_texts = result_dict.get('rec_texts', [])
-                    for text in rec_texts:
-                        alltext += text + "\n"
-                    
-            except Exception as e:
-                logger.error(f"Skipping file {files.filename} due to processing error: {e}")
-                continue
+        all_ocr_items = all_items
+        alltext = allText
         
         # Match OCR results with database items
         matched_items = []
