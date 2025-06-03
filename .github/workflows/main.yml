@@ -50,7 +50,7 @@ jobs:
             if [ "$OLD_HASH" != "$NEW_HASH" ] || [ -z "$OLD_HASH" ]; then
               echo "Dependencies changed, updating..."
               source venv/bin/activate
-              pip install -r requirements.txt 
+              pip install -r requirements.txt --upgrade
               deactivate
             
             else

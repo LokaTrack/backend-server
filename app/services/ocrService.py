@@ -17,7 +17,7 @@ from app.config.firestore import db
 
 logger = logging.getLogger(__name__)
 
-paddle_ocr = PaddleOCR(use_angle_cls=True, lang='en')
+paddle_ocr = PaddleOCR(use_textline_orientation=True, lang='en', ocr_version='PP-OCRv3', device='cpu')  # Initialize PaddleOCR
 
 async def processOCR (imageFile):
     """Reads an UploadFile, performs OCR, and returns the extracted text."""
@@ -485,7 +485,7 @@ async def processPaddleOCR(imageFile):
         img_array = np.array(image)
         
         # Perform OCR with PaddleOCR
-        result = paddle_ocr.ocr(img_array, cls=True)
+        result = paddle_ocr.predict(img_array)
         return result
     except Exception as e:
         logger.error(f"Error processing image {imageFile.filename} with PaddleOCR: {e}")
@@ -498,36 +498,47 @@ async def processPaddleOCR(imageFile):
             )
 
 def extract_table_data_from_paddle_result(paddle_result):
-    """Extract table data from PaddleOCR result by analyzing coordinates and text."""
-    if not paddle_result or not paddle_result[0]:
+    """Extract table data from PaddleOCR 3.0.0 result by analyzing coordinates and text."""
+    if not paddle_result or len(paddle_result) == 0:
+        return []
+    
+    # PaddleOCR 3.0.0 returns a different structure
+    # paddle_result is a list with one element containing the result dict
+    result_dict = paddle_result[0]
+    
+    # Extract texts and coordinates
+    rec_texts = result_dict.get('rec_texts', [])
+    rec_polys = result_dict.get('rec_polys', [])
+    rec_scores = result_dict.get('rec_scores', [])
+    
+    if not rec_texts or not rec_polys:
         return []
     
     # Extract all text boxes with their coordinates and text
     text_boxes = []
-    for line in paddle_result[0]:
-        bbox = line[0]  # Bounding box coordinates
-        text = line[1][0]  # Extracted text
-        confidence = line[1][1]  # Confidence score
+    for i, (text, poly, score) in enumerate(zip(rec_texts, rec_polys, rec_scores)):
+        # Calculate center Y coordinate for row grouping from polygon
+        y_coords = poly[:, 1]  # Extract Y coordinates
+        x_coords = poly[:, 0]  # Extract X coordinates
         
-        # Calculate center Y coordinate for row grouping
-        y_center = (bbox[0][1] + bbox[2][1]) / 2
-        x_left = bbox[0][0]
+        y_center = float(np.mean(y_coords))
+        x_left = float(np.min(x_coords))
         
         text_boxes.append({
             'text': text.strip(),
             'y_center': y_center,
             'x_left': x_left,
-            'confidence': confidence,
-            'bbox': bbox
+            'confidence': float(score),
+            'bbox': poly
         })
     
     # Sort by Y coordinate (top to bottom)
     text_boxes.sort(key=lambda x: x['y_center'])
     
-    # Group text boxes into rows (same Y level)
+    # Group text boxes into rows (same Y level) with improved threshold
     rows = []
     current_row = []
-    y_threshold = 20  # Pixels tolerance for same row
+    y_threshold = 15  # Reduced threshold for better row detection
     
     for box in text_boxes:
         if not current_row:
@@ -551,78 +562,79 @@ def extract_table_data_from_paddle_result(paddle_result):
     return rows
 
 def parse_delivery_order_rows(rows):
-    """Parse rows to extract delivery order items with return quantities."""
+    """Parse rows with more flexible approach for incomplete tables."""
     items = []
     
     for row in rows:
         row_text = [box['text'] for box in row]
         full_row_text = ' '.join(row_text)
         
-        # Skip header rows or empty rows
-        if (not full_row_text.strip() or 
-            'no' in full_row_text.lower() or 
-            'item' in full_row_text.lower() or
-            'qty' in full_row_text.lower() or
-            'return' in full_row_text.lower() or
-            'unit' in full_row_text.lower() or
-            'price' in full_row_text.lower() or
-            'total' in full_row_text.lower() or
-            'notes' in full_row_text.lower()):
+        # Skip completely empty rows or very short ones
+        if not full_row_text.strip() or len(full_row_text.strip()) < 2:
+            continue
+            
+        # Skip obvious header rows but be more specific
+        if (full_row_text.strip().lower() in ['no', 'item', 'qty', 'return', 'no item qty return'] or
+            'address' in full_row_text.lower() or
+            'phone' in full_row_text.lower()):
             continue
         
-        # Try to identify columns by position and content
         no_val = None
         item_name = ""
         qty_val = 0.0
         return_val = 0.0
         
-        # Look for number pattern at the beginning (item number)
-        for i, text in enumerate(row_text):
-            # Check if it's a number (item number)
-            if re.match(r'^\d+$', text.strip()):
-                no_val = int(text.strip())
-                
-                # Item name is usually after the number
-                if i + 1 < len(row_text):
-                    # Collect item name (might span multiple cells)
-                    item_parts = []
-                    for j in range(i + 1, len(row_text)):
-                        current_text = row_text[j].strip()
-                        # Stop if we hit a number that looks like quantity
-                        if re.match(r'^[0-9loiOIl,\.]+$', current_text):
-                            break
-                        # Stop if we hit "Rp" (price indicator)
-                        if 'rp' in current_text.lower():
-                            break
-                        item_parts.append(current_text)
-                    
-                    item_name = ' '.join(item_parts).strip()
-                
-                # Look for quantities after item name
-                numeric_values = []
-                for j in range(i + 1, len(row_text)):
-                    text = row_text[j].strip()
-                    if re.match(r'^[0-9loiOIl,\.]+$', text):
-                        try:
-                            val = parse_qty_return(text)
-                            numeric_values.append(val)
-                        except:
-                            continue
-                    elif 'rp' in text.lower():
-                        break  # Stop at price
-                
-                # Assign quantities based on how many we found
-                if len(numeric_values) >= 2:
-                    qty_val = numeric_values[0]
-                    return_val = numeric_values[1]
-                elif len(numeric_values) == 1:
-                    qty_val = numeric_values[0]
-                    return_val = 0.0
-                
-                break
         
-        # Only add if we found a valid item number and name
-        if no_val is not None and item_name:
+        # Try to find patterns in the row
+        for i, text in enumerate(row_text):
+            text = text.strip()
+            
+            # Look for item number (single digit at start)
+            if re.match(r'^\d+$', text) and len(text) <= 2:
+                try:
+                    potential_no = int(text)
+                    if 1 <= potential_no <= 20:  # Reasonable item number range
+                        no_val = potential_no
+                        
+                        # Collect subsequent text as item name until we hit numbers
+                        item_parts = []
+                        qty_candidates = []
+                        
+                        for j in range(i + 1, len(row_text)):
+                            current_text = row_text[j].strip()
+                            
+                            # Skip empty
+                            if not current_text:
+                                continue
+                            
+                            # If it's a number, it might be quantity or return
+                            if re.match(r'^\d+(\.\d+)?$', current_text):
+                                try:
+                                    val = float(current_text)
+                                    if val <= 100:  # Reasonable quantity/return range
+                                        qty_candidates.append(val)
+                                except:
+                                    pass
+                            # If it contains letters and parentheses, likely part of item name
+                            elif re.search(r'[a-zA-Z\(\)]', current_text):
+                                item_parts.append(current_text)
+                        
+                        item_name = ' '.join(item_parts).strip()
+                        
+                        # Assign quantities
+                        if len(qty_candidates) >= 2:
+                            qty_val = qty_candidates[0]
+                            return_val = qty_candidates[1]
+                        elif len(qty_candidates) == 1:
+                            qty_val = qty_candidates[0]
+                            return_val = 0.0
+                        
+                        break
+                except:
+                    continue
+        
+        # Add item if we found valid data
+        if no_val is not None and item_name and len(item_name) > 3:
             items.append({
                 "No": no_val,
                 "Item": item_name,
@@ -652,9 +664,12 @@ async def getReturnItemsPaddle(imageFile):
                 items = parse_delivery_order_rows(rows)
 
                 all_items.extend(items)
-                # get all text from paddle_result for debugging
-                for line in paddle_result[0]:
-                    alltext += line[1][0] + "\n"
+                # Get all text from paddle_result for debugging
+                if paddle_result and len(paddle_result) > 0:
+                    result_dict = paddle_result[0]
+                    rec_texts = result_dict.get('rec_texts', [])
+                    for text in rec_texts:
+                        alltext += text + "\n"
                 
             except Exception as e:
                 logger.error(f"Skipping file {files.filename} due to processing error: {e}")
@@ -736,9 +751,12 @@ async def getReturnItemPaddleUsingDatabase (imagesFile, orderNo):
                 items = parse_delivery_order_rows(rows)
                 all_ocr_items.extend(items)
                 
-                # Get all text for debugging
-                for line in paddle_result[0]:
-                    alltext += line[1][0] + "\n"
+                # Get all text from paddle_result for debugging
+                if paddle_result and len(paddle_result) > 0:
+                    result_dict = paddle_result[0]
+                    rec_texts = result_dict.get('rec_texts', [])
+                    for text in rec_texts:
+                        alltext += text + "\n"
                     
             except Exception as e:
                 logger.error(f"Skipping file {files.filename} due to processing error: {e}")
