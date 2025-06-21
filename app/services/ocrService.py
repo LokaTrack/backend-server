@@ -17,7 +17,22 @@ from httpx import AsyncClient, HTTPStatusError
 
 logger = logging.getLogger(__name__)
 
-# paddle_ocr = PaddleOCR(use_textline_orientation=True, lang='en', ocr_version='PP-OCRv3', device='cpu')  # Initialize PaddleOCR
+# Initialize PaddleOCR
+# from paddleocr import PaddleOCR
+# PaddleOCR = PaddleOCR( 
+#         # use server version for better performance
+#         # text_detection_model_name="PP-OCRv4_server_det",
+#         # text_recognition_model_name="PP-OCRv4_server_rec",
+#         ocr_version='PP-OCRv5', 
+#         use_doc_orientation_classify=True,
+#         use_doc_unwarping=True,
+#         use_textline_orientation=True, 
+#         lang='en',
+#         device='cpu'
+#     )
+
+# PaddleOCR is deployed on a separate server
+paddleOCR = None
 
 async def processOCR (imageFile):
     """Reads an UploadFile, performs OCR, and returns the extracted text."""
@@ -457,7 +472,7 @@ async def getOrderNoFromURL (url, currentUser):
 async def processPaddleOCR(imageFile):
     """Process image using PaddleOCR and return extracted text with coordinates."""
         # Check if PaddleOCR is properly initialized
-    if paddle_ocr is None:
+    if paddleOCR is None:
         raise HTTPException(
             logger.error("PaddleOCR initialization failed. Check dependencies."),
             status_code=500,
@@ -485,7 +500,7 @@ async def processPaddleOCR(imageFile):
         img_array = np.array(image)
         
         # Perform OCR with PaddleOCR
-        result = paddle_ocr.predict(img_array)
+        result = paddleOCR.predict(img_array)
         return result
     except Exception as e:
         logger.error(f"Error processing image {imageFile.filename} with PaddleOCR: {e}")

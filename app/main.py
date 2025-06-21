@@ -54,13 +54,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Lokatani GPS Tracking API",
-    docs_url="/api/v1/lokatrack/dokumentasi",
+    docs_url="/api/v1/lokatrack/docs",
     openapi_url="/api/v1/lokatrack/openapi.json",
     lifespan=lifespan
 )
 
 # Create an ASGI app by wrapping the FastAPI app with SocketIO
-socket_app = socketio.ASGIApp(sio, app)
+server = socketio.ASGIApp(sio, app)
 
 # Pass the Socket.IO instance to the MQTT module
 set_socketio(sio)
@@ -115,7 +115,7 @@ async def root():
 
 if __name__ == "__main__":
     logger.debug("Starting FastAPI application, log level: %s", log_level)
-    uvicorn.run(socket_app, host="127.0.0.1", port=8000, log_level=log_level.lower())
+    uvicorn.run(server, host="127.0.0.1", port=8000, log_level=log_level.lower())
 # now you can run the app using the command:
 # python -m app.main
 # or using the command:
