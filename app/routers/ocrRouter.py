@@ -77,7 +77,6 @@ async def scan_barcode(image: UploadFile = File(...)):
             status_code=e.status_code,
             content=e.detail
         )
-
 @router.post("/order-no")
 async def ocr_get_order_no_from_url(
     url: str = Body(..., embed=True, description="URL containing the Order No"),
